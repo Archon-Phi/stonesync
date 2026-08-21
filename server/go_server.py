@@ -12,14 +12,16 @@ from server.go_game import GoGame
 logger = logging.getLogger("StoneSyncServer")
 
 class Room:
-    def __init__(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0):
+    def __init__(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0, is_solo: bool = False):
         self.room_id = room_id
         self.game = GoGame(board_size=board_size, komi=komi, handicap=handicap)
+        self.is_solo = is_solo
         # Mapping player_id -> color ('B' or 'W')
         self.players: Dict[str, str] = {}
         # Active WebSocket connections: websocket -> player_id
         self.connections: Dict[WebSocket, str] = {}
         self.lock = asyncio.Lock()
+
 
     def register_player(self, player_id: str) -> str:
         """Assign role ('B', 'W', or 'observer') to player_id."""
@@ -71,16 +73,17 @@ class RoomManager:
     def __init__(self):
         self.rooms: Dict[str, Room] = {}
 
-    def get_or_create_room(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0) -> Room:
+    def get_or_create_room(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0, is_solo: bool = False) -> Room:
         if room_id not in self.rooms:
-            self.rooms[room_id] = Room(room_id, board_size=board_size, komi=komi, handicap=handicap)
+            self.rooms[room_id] = Room(room_id, board_size=board_size, komi=komi, handicap=handicap, is_solo=is_solo)
         return self.rooms[room_id]
 
-    async def connect_client(self, websocket: WebSocket, room_id: str, player_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0) -> Tuple[Room, str]:
+    async def connect_client(self, websocket: WebSocket, room_id: str, player_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0, is_solo: bool = False) -> Tuple[Room, str]:
         await websocket.accept()
-        room = self.get_or_create_room(room_id, board_size=board_size, komi=komi, handicap=handicap)
+        room = self.get_or_create_room(room_id, board_size=board_size, komi=komi, handicap=handicap, is_solo=is_solo)
+        if is_solo:
+            room.is_solo = True
 
-        
         async with room.lock:
             role = room.register_player(player_id)
             room.connections[websocket] = player_id
@@ -110,6 +113,8 @@ class RoomManager:
         action = data.get("action")
         async with room.lock:
             role = room.players.get(player_id, 'observer')
+            if room.is_solo or data.get("is_solo"):
+                role = room.game.current_player
 
             if action == "move":
                 r = data.get("r")

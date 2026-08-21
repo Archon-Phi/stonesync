@@ -57,12 +57,16 @@ async def websocket_go_endpoint(
     room_id: str,
     player_id: str = Query(...),
     board_size: int = Query(19),
-    komi: Optional[float] = Query(None),
-    handicap: int = Query(0)
+    komi: float = Query(6.5),
+    handicap: int = Query(0),
+    mode: str = Query("online")
 ):
+
+    is_solo = (mode == "solo")
     room, role = await room_manager.connect_client(
-        websocket, room_id, player_id, board_size=board_size, komi=komi, handicap=handicap
+        websocket, room_id, player_id, board_size=board_size, komi=komi, handicap=handicap, is_solo=is_solo
     )
+
 
     try:
         while True:
