@@ -588,11 +588,28 @@ canvas#go-board {
   flex: 1;
 }
 
-/* Footer */
-.app-footer {
-  margin-top: auto;
-  padding-top: 24px;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--text-dim);
+/* Board Themes */
+.theme-kaya {
+  background: linear-gradient(135deg, #DCA466 0%, #C68B45 100%) !important;
+  border-color: #291A0C !important;
 }
+
+.theme-obsidian {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.25), inset 0 0 15px rgba(0, 0, 0, 0.8) !important;
+}
+
+.theme-cyberpunk {
+  background: linear-gradient(135deg, #180B2B 0%, #2A0845 100%) !important;
+  border-color: #F43F5E !important;
+  box-shadow: 0 0 30px rgba(244, 63, 94, 0.35), inset 0 0 20px rgba(0, 0, 0, 0.9) !important;
+}
+
+.btn-active-heatmap {
+  background: rgba(16, 185, 129, 0.25) !important;
+  color: #10B981 !important;
+  border-color: #10B981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4) !important;
+}
+

@@ -1,6 +1,6 @@
 /**
  * StoneSync Client Application
- * WebSocket real-time Go game engine client with Canvas rendering & Audio feedback.
+ * WebSocket real-time Go game engine client with Canvas rendering, Themes, Spatial Audio, & Influence Heatmap.
  */
 
 (function () {
@@ -23,6 +23,11 @@
   let prevCapturesCount = 0;
   let hoveredIntersection = null;
 
+  // Theme & Visual Features State
+  let currentTheme = localStorage.getItem('stonesync_theme') || 'kaya';
+  let showHeatmap = false;
+  let masterVolume = parseFloat(localStorage.getItem('stonesync_volume') || '0.8');
+
   // --- 2. Parse & Sync URL Parameters ---
   const urlParams = new URLSearchParams(window.location.search);
   let currentRoomId = urlParams.get('room') || 'stonesync-main';
@@ -37,6 +42,8 @@
   const roomInput = document.getElementById('room-input');
   const boardSizeSelect = document.getElementById('board-size-select');
   const komiInput = document.getElementById('komi-input');
+  const themeSelect = document.getElementById('theme-select');
+  const volumeRange = document.getElementById('volume-range');
   const shareUrlInput = document.getElementById('share-url-input');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const roomForm = document.getElementById('room-form');
@@ -50,6 +57,7 @@
   const playersListEl = document.getElementById('players-list');
 
   const btnPass = document.getElementById('btn-pass');
+  const btnHeatmap = document.getElementById('btn-heatmap');
   const btnReset = document.getElementById('btn-reset');
   const toastBanner = document.getElementById('toast-banner');
 
@@ -69,17 +77,9 @@
   const btnModalReset = document.getElementById('btn-modal-reset');
   const btnModalClose = document.getElementById('btn-modal-close');
 
-  // --- 4. Audio Engine ---
-  const placementSounds = [
-    '/static/go-sounds/GoGame-Thwack1.wav',
-    '/static/go-sounds/GoGame-Thwack2.wav',
-    '/static/go-sounds/GoGame-Thwack3.wav',
-    '/static/go-sounds/GoGame-Thwack4.wav'
-  ];
-  const captureSoundUrl = '/static/go-sounds/GoGame-PieceRemoved.mp3';
-
-  // Audio Context Resumption on user interaction
+  // --- 4. Spatial Audio Engine ---
   let audioContext = null;
+
   function getAudioContext() {
     if (!audioContext) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -91,29 +91,113 @@
     return audioContext;
   }
 
-  function playSound(soundUrl) {
+  // Synthesize spatial pitch-shifted stone impact sound based on board position
+  function playSpatialPlacementSound(row, col, size) {
+    if (masterVolume <= 0) return;
     try {
-      getAudioContext();
-      const audio = new Audio(soundUrl);
-      audio.volume = 0.85;
-      audio.play().catch(err => {
-        console.log('Audio autoplay prevented or failed gracefully:', err);
-      });
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio) return;
+
+      const now = ctxAudio.currentTime;
+
+      // Distance from board center (0 at center, 1 at corner)
+      const center = (size - 1) / 2;
+      const distFromCenter = Math.hypot(row - center, col - center) / (center * Math.SQRT2 || 1);
+
+      // Pitch shift: center = deep 380Hz, corner = crisp 680Hz
+      const baseFreq = 380 + (distFromCenter * 300);
+
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(baseFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.4, now + 0.08);
+
+      // Sharp wood impact envelope
+      gain.gain.setValueAtTime(masterVolume * 0.85, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.08);
+
+      // Soft high-frequency transient click
+      const noiseOsc = ctxAudio.createOscillator();
+      const noiseGain = ctxAudio.createGain();
+      noiseOsc.type = 'triangle';
+      noiseOsc.frequency.setValueAtTime(baseFreq * 2.5, now);
+      noiseGain.gain.setValueAtTime(masterVolume * 0.3, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+      noiseOsc.connect(noiseGain);
+      noiseGain.connect(ctxAudio.destination);
+
+      noiseOsc.start(now);
+      noiseOsc.stop(now + 0.03);
     } catch (e) {
-      // Fail gracefully
+      // Audio graceful fallback
     }
   }
 
-  function playPlacementSound() {
-    const randomIndex = Math.floor(Math.random() * placementSounds.length);
-    playSound(placementSounds[randomIndex]);
-  }
-
   function playCaptureSound() {
-    playSound(captureSoundUrl);
+    if (masterVolume <= 0) return;
+    try {
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio) return;
+
+      const now = ctxAudio.currentTime;
+      [0, 0.035].forEach((delay, idx) => {
+        const osc = ctxAudio.createOscillator();
+        const gain = ctxAudio.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(750 + (idx * 100), now + delay);
+        osc.frequency.exponentialRampToValueAtTime(300, now + delay + 0.06);
+
+        gain.gain.setValueAtTime(masterVolume * (0.8 - idx * 0.2), now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.06);
+
+        osc.connect(gain);
+        gain.connect(ctxAudio.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.06);
+      });
+    } catch (e) {
+      // Audio graceful fallback
+    }
   }
 
-  // --- 5. Initial Form & URL Sync ---
+  // --- 5. Theme & Controls Sync ---
+  function applyTheme(theme) {
+    currentTheme = theme;
+    localStorage.setItem('stonesync_theme', theme);
+    canvasContainer.className = `canvas-container theme-${theme}`;
+    renderBoard();
+  }
+
+  themeSelect.value = currentTheme;
+  applyTheme(currentTheme);
+
+  themeSelect.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+
+  volumeRange.value = masterVolume.toString();
+  volumeRange.addEventListener('input', (e) => {
+    masterVolume = parseFloat(e.target.value);
+    localStorage.setItem('stonesync_volume', masterVolume.toString());
+  });
+
+  btnHeatmap.addEventListener('click', () => {
+    showHeatmap = !showHeatmap;
+    btnHeatmap.classList.toggle('btn-active-heatmap', showHeatmap);
+    renderBoard();
+  });
+
   function updateUrlAndControls() {
     roomInput.value = currentRoomId;
     boardSizeSelect.value = currentBoardSize.toString();
@@ -155,7 +239,7 @@
     }, 3200);
   }
 
-  // --- 7. WebSocket Multiplayer Connection ---
+  // --- 7. WebSocket Connection ---
   function connectWebSocket() {
     if (socket) {
       socket.close();
@@ -206,23 +290,21 @@
     if (data.your_role) {
       myRole = data.your_role;
     } else {
-      // Find my role from players array
       const me = data.players.find(p => p.player_id === playerId);
       myRole = me ? me.color : 'observer';
     }
 
-    // Audio sound check
+    // Audio spatial sound calculation
     const totalCaptures = (gameState.captures.B || 0) + (gameState.captures.W || 0);
     if (data.last_action) {
       if (data.last_action.captured > 0 || totalCaptures > prevCapturesCount) {
         playCaptureSound();
-      } else if (data.last_action.action === 'move') {
-        playPlacementSound();
+      } else if (data.last_action.action === 'move' && gameState.last_move) {
+        playSpatialPlacementSound(gameState.last_move.r, gameState.last_move.c, gameState.board_size);
       }
     }
     prevCapturesCount = totalCaptures;
 
-    // Update UI elements
     updateRoleBadge();
     updateTurnIndicator(gameState);
     updateCaptures(gameState);
@@ -341,7 +423,6 @@
     sendReset();
   });
 
-  // --- 9. In-Game Controls Event Handlers ---
   btnPass.addEventListener('click', () => {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
     socket.send(JSON.stringify({ action: 'pass' }));
@@ -362,7 +443,7 @@
     }
   });
 
-  // --- 10. Canvas Go Board Renderer ---
+  // --- 9. Canvas Go Board Renderer & Heatmap ---
   function getStarPoints(size) {
     if (size === 19) {
       return [
@@ -404,25 +485,38 @@
     ctx.clearRect(0, 0, width, height);
 
     const size = currentGameState ? currentGameState.board_size : currentBoardSize;
-    const padding = 36; // Padding around board for coordinates
+    const padding = 36;
     const boardArea = Math.min(width, height) - (padding * 2);
     const cellSize = boardArea / (size - 1);
 
     const startX = (width - boardArea) / 2;
     const startY = (height - boardArea) / 2;
 
+    // Theme Colors Configuration
+    let lineColor = '#382414';
+    let textColor = '#4A3018';
+    let starColor = '#382414';
+
+    if (currentTheme === 'obsidian') {
+      lineColor = 'rgba(56, 189, 248, 0.4)';
+      textColor = '#38BDF8';
+      starColor = '#38BDF8';
+    } else if (currentTheme === 'cyberpunk') {
+      lineColor = 'rgba(244, 63, 94, 0.5)';
+      textColor = '#F43F5E';
+      starColor = '#F43F5E';
+    }
+
     // A. Draw Grid Lines
     ctx.lineWidth = 1.2;
-    ctx.strokeStyle = '#382414';
+    ctx.strokeStyle = lineColor;
 
     for (let i = 0; i < size; i++) {
-      // Horizontal line
       ctx.beginPath();
       ctx.moveTo(startX, startY + i * cellSize);
       ctx.lineTo(startX + boardArea, startY + i * cellSize);
       ctx.stroke();
 
-      // Vertical line
       ctx.beginPath();
       ctx.moveTo(startX + i * cellSize, startY);
       ctx.lineTo(startX + i * cellSize, startY + boardArea);
@@ -430,7 +524,7 @@
     }
 
     // B. Draw Board Coordinate Markers
-    ctx.fillStyle = '#4A3018';
+    ctx.fillStyle = textColor;
     ctx.font = '600 11px "Space Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -439,18 +533,16 @@
       const colChar = String.fromCharCode(65 + i);
       const rowNum = (size - i).toString();
 
-      // Top & Bottom Columns
       ctx.fillText(colChar, startX + i * cellSize, startY - 18);
       ctx.fillText(colChar, startX + i * cellSize, startY + boardArea + 18);
 
-      // Left & Right Rows
       ctx.fillText(rowNum, startX - 18, startY + i * cellSize);
       ctx.fillText(rowNum, startX + boardArea + 18, startY + i * cellSize);
     }
 
-    // C. Draw Star Points (Hoshi)
+    // C. Draw Star Points
     const starPoints = getStarPoints(size);
-    ctx.fillStyle = '#382414';
+    ctx.fillStyle = starColor;
     starPoints.forEach(([r, c]) => {
       ctx.beginPath();
       ctx.arc(startX + c * cellSize, startY + r * cellSize, Math.max(3, cellSize * 0.08), 0, Math.PI * 2);
@@ -460,10 +552,16 @@
     if (!currentGameState) return;
 
     const grid = currentGameState.grid;
+
+    // D. Influence Heatmap Layer (if toggled)
+    if (showHeatmap) {
+      renderInfluenceHeatmap(startX, startY, cellSize, size, grid);
+    }
+
+    // E. Render Placed Stones
     const lastMove = currentGameState.last_move;
     const stoneRadius = cellSize * 0.46;
 
-    // D. Render Placed Stones
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
         const stone = grid[r][c];
@@ -472,9 +570,8 @@
         const cx = startX + c * cellSize;
         const cy = startY + r * cellSize;
 
-        drawStone(cx, cy, stoneRadius, stone);
+        drawStone(cx, cy, stoneRadius, stone, currentTheme);
 
-        // Highlight last move with indicator
         if (lastMove && lastMove.r === r && lastMove.c === c) {
           ctx.beginPath();
           ctx.arc(cx, cy, stoneRadius * 0.45, 0, Math.PI * 2);
@@ -485,7 +582,7 @@
       }
     }
 
-    // E. Draw Hover Preview Stone
+    // F. Draw Hover Preview Stone
     if (hoveredIntersection && myRole !== 'observer' && currentGameState.current_player === myRole && !currentGameState.game_over) {
       const { r, c } = hoveredIntersection;
       if (grid[r] && grid[r][c] === null) {
@@ -494,16 +591,65 @@
 
         ctx.save();
         ctx.globalAlpha = 0.5;
-        drawStone(cx, cy, stoneRadius, myRole);
+        drawStone(cx, cy, stoneRadius, myRole, currentTheme);
         ctx.restore();
       }
     }
   }
 
-  function drawStone(cx, cy, radius, color) {
+  // Render visual territorial influence clouds
+  function renderInfluenceHeatmap(startX, startY, cellSize, size, grid) {
+    const influence = Array.from({ length: size }, () => Array(size).fill(0));
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const stone = grid[r][c];
+        if (!stone) continue;
+        const val = stone === 'B' ? 1 : -1;
+
+        // Radiate influence to neighboring cells
+        for (let dr = -3; dr <= 3; dr++) {
+          for (let dc = -3; dc <= 3; dc++) {
+            const nr = r + dr;
+            const nc = c + dc;
+            if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+              const d = Math.hypot(dr, dc);
+              influence[nr][nc] += val * Math.exp(-d / 2.0);
+            }
+          }
+        }
+      }
+    }
+
+    // Render influence gradients
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const inf = influence[r][c];
+        if (Math.abs(inf) < 0.25) continue;
+
+        const cx = startX + c * cellSize;
+        const cy = startY + r * cellSize;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, cellSize * 0.75, 0, Math.PI * 2);
+
+        if (inf > 0) {
+          // Black Influence
+          ctx.fillStyle = `rgba(59, 130, 246, ${Math.min(0.35, inf * 0.12)})`;
+        } else {
+          // White Influence
+          ctx.fillStyle = `rgba(245, 158, 11, ${Math.min(0.35, Math.abs(inf) * 0.12)})`;
+        }
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  function drawStone(cx, cy, radius, color, theme) {
     ctx.save();
 
-    // Stone Drop Shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
     ctx.shadowBlur = 8;
     ctx.shadowOffsetX = 3;
@@ -517,31 +663,61 @@
         cx - radius * 0.3, cy - radius * 0.3, radius * 0.1,
         cx, cy, radius
       );
-      grad.addColorStop(0, '#4B5563');
-      grad.addColorStop(0.4, '#1F2937');
-      grad.addColorStop(1, '#030712');
+
+      if (theme === 'cyberpunk') {
+        grad.addColorStop(0, '#A855F7');
+        grad.addColorStop(0.5, '#3B0764');
+        grad.addColorStop(1, '#090514');
+        ctx.shadowColor = '#C084FC';
+        ctx.shadowBlur = 12;
+      } else if (theme === 'obsidian') {
+        grad.addColorStop(0, '#334155');
+        grad.addColorStop(0.5, '#0F172A');
+        grad.addColorStop(1, '#020617');
+        ctx.shadowColor = '#000000';
+      } else {
+        grad.addColorStop(0, '#4B5563');
+        grad.addColorStop(0.4, '#1F2937');
+        grad.addColorStop(1, '#030712');
+      }
+
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Soft Specular Reflection
+      // Specular Reflection
       ctx.shadowColor = 'transparent';
       ctx.beginPath();
       ctx.ellipse(cx - radius * 0.35, cy - radius * 0.35, radius * 0.3, radius * 0.18, -Math.PI / 4, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.fill();
     } else {
       const grad = ctx.createRadialGradient(
         cx - radius * 0.3, cy - radius * 0.3, radius * 0.1,
         cx, cy, radius
       );
-      grad.addColorStop(0, '#FFFFFF');
-      grad.addColorStop(0.6, '#F3F4F6');
-      grad.addColorStop(0.9, '#E5E7EB');
-      grad.addColorStop(1, '#9CA3AF');
+
+      if (theme === 'cyberpunk') {
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.5, '#22D3EE');
+        grad.addColorStop(1, '#0891B2');
+        ctx.shadowColor = '#22D3EE';
+        ctx.shadowBlur = 12;
+      } else if (theme === 'obsidian') {
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.5, '#E2E8F0');
+        grad.addColorStop(1, '#94A3B8');
+        ctx.shadowColor = '#38BDF8';
+        ctx.shadowBlur = 8;
+      } else {
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.6, '#F3F4F6');
+        grad.addColorStop(0.9, '#E5E7EB');
+        grad.addColorStop(1, '#9CA3AF');
+      }
+
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Specular Gloss
       ctx.shadowColor = 'transparent';
       ctx.beginPath();
       ctx.ellipse(cx - radius * 0.3, cy - radius * 0.3, radius * 0.35, radius * 0.2, -Math.PI / 4, 0, Math.PI * 2);
@@ -552,7 +728,7 @@
     ctx.restore();
   }
 
-  // --- 11. Canvas User Input Handling ---
+  // --- 10. Canvas User Input Handling ---
   function getIntersectionFromCoords(mouseX, mouseY) {
     const width = canvasContainer.clientWidth;
     const height = canvasContainer.clientHeight;
@@ -567,7 +743,6 @@
     const row = Math.round((mouseY - startY) / cellSize);
 
     if (row >= 0 && row < size && col >= 0 && col < size) {
-      // Check proximity (within 45% cell radius)
       const interX = startX + col * cellSize;
       const interY = startY + row * cellSize;
       const dist = Math.hypot(mouseX - interX, mouseY - interY);
@@ -598,7 +773,7 @@
   });
 
   canvas.addEventListener('click', (e) => {
-    getAudioContext(); // Ensure Audio Context is resumed on click
+    getAudioContext();
 
     if (!currentGameState || currentGameState.game_over) return;
     if (myRole === 'observer') {
@@ -626,11 +801,48 @@
     }
   });
 
+  // --- 11. SGF Export & Import Handlers ---
+  const btnExportSgf = document.getElementById('btn-export-sgf');
+  const inputImportSgf = document.getElementById('input-import-sgf');
+
+  if (btnExportSgf) {
+    btnExportSgf.addEventListener('click', () => {
+      window.location.href = `/api/room/${encodeURIComponent(currentRoomId)}/sgf`;
+    });
+  }
+
+  if (inputImportSgf) {
+    inputImportSgf.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const sgfContent = evt.target.result;
+        try {
+          const res = await fetch(`/api/room/${encodeURIComponent(currentRoomId)}/sgf`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: sgfContent
+          });
+          if (res.ok) {
+            showToast('SGF game record imported successfully!', false);
+          } else {
+            const errText = await res.text();
+            showToast(`SGF Import Error: ${errText}`, true);
+          }
+        } catch (err) {
+          showToast(`Import failed: ${err.message}`, true);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
   // --- 12. Initialization ---
   updateUrlAndControls();
   connectWebSocket();
-
-  // Initial canvas layout
   setTimeout(resizeCanvas, 50);
 
 })();
+

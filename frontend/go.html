@@ -48,8 +48,25 @@
                 <input type="number" id="komi-input" step="0.5" value="6.5">
               </div>
             </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="theme-select">Board Theme</label>
+                <select id="theme-select">
+                  <option value="kaya" selected>🪵 Classic Kaya Wood</option>
+                  <option value="obsidian">💎 Obsidian Glass</option>
+                  <option value="cyberpunk">⚡ Cyberpunk Neon</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="volume-range">Sound Volume</label>
+                <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.8">
+              </div>
+            </div>
+
             <button type="submit" id="btn-join-room" class="btn btn-primary">Join / Create Room</button>
           </form>
+
 
           <div class="share-url-container">
             <label>Shareable Room URL</label>
@@ -57,7 +74,20 @@
               <input type="text" id="share-url-input" readonly>
               <button type="button" id="btn-copy-url" class="btn btn-secondary">Copy</button>
             </div>
+            
+            <div class="form-row" style="margin-top: 10px;">
+              <button type="button" id="btn-export-sgf" class="btn btn-secondary btn-action">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export SGF
+              </button>
+              <label for="input-import-sgf" class="btn btn-secondary btn-action" style="margin: 0; text-align: center; cursor: pointer;">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Import SGF
+                <input type="file" id="input-import-sgf" accept=".sgf" style="display: none;">
+              </label>
+            </div>
           </div>
+
         </section>
 
         <!-- Match Status Card -->
@@ -115,13 +145,18 @@
           <div class="actions-group">
             <button id="btn-pass" class="btn btn-action btn-pass" disabled>
               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              Pass Turn
+              Pass
+            </button>
+            <button id="btn-heatmap" class="btn btn-action btn-secondary">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
+              Heatmap
             </button>
             <button id="btn-reset" class="btn btn-action btn-reset">
               <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-              Reset Match
+              Reset
             </button>
           </div>
+
         </section>
 
         <!-- Connected Players Card -->

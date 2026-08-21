@@ -9,8 +9,11 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.go_server import RoomManager
+from server.sgf import export_to_sgf, parse_sgf
+from fastapi import Response, Request
 
 app = FastAPI(title="StoneSync - Online Multiplayer Go")
+
 
 # Locate frontend directory relative to current file
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -65,3 +68,29 @@ async def websocket_go_endpoint(
         await room_manager.disconnect_client(websocket, room)
     except Exception as e:
         await room_manager.disconnect_client(websocket, room)
+
+@app.get("/api/room/{room_id}/sgf")
+async def export_room_sgf(room_id: str):
+    room = room_manager.get_or_create_room(room_id)
+    sgf_content = export_to_sgf(room.game)
+    return Response(
+        content=sgf_content,
+        media_type="application/x-go-sgf",
+        headers={"Content-Disposition": f'attachment; filename="stonesync_{room_id}.sgf"'}
+    )
+
+
+@app.post("/api/room/{room_id}/sgf")
+async def import_room_sgf(room_id: str, request: Request):
+    body = await request.body()
+    sgf_text = body.decode("utf-8")
+    try:
+        imported_game = parse_sgf(sgf_text)
+        room = room_manager.get_or_create_room(room_id, board_size=imported_game.board_size, komi=imported_game.komi)
+        async with room.lock:
+            room.game = imported_game
+            await room.broadcast(room.get_state_payload())
+        return {"status": "success", "message": "SGF game record imported successfully"}
+    except Exception as e:
+        return Response(content=f"Invalid SGF content: {e}", status_code=400)
+

@@ -178,7 +178,8 @@ class GoGame:
         else:
             self.winner = 'Draw'
 
-    def to_dict((self) -> dict:
+    def to_dict(self) -> dict:
+
         return {
             'board_size': self.board_size,
             'komi': self.komi,
