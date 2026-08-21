@@ -12,9 +12,9 @@ from server.go_game import GoGame
 logger = logging.getLogger("StoneSyncServer")
 
 class Room:
-    def __init__(self, room_id: str, board_size: int = 19, komi: float = 6.5):
+    def __init__(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0):
         self.room_id = room_id
-        self.game = GoGame(board_size=board_size, komi=komi)
+        self.game = GoGame(board_size=board_size, komi=komi, handicap=handicap)
         # Mapping player_id -> color ('B' or 'W')
         self.players: Dict[str, str] = {}
         # Active WebSocket connections: websocket -> player_id
@@ -71,14 +71,15 @@ class RoomManager:
     def __init__(self):
         self.rooms: Dict[str, Room] = {}
 
-    def get_or_create_room(self, room_id: str, board_size: int = 19, komi: float = 6.5) -> Room:
+    def get_or_create_room(self, room_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0) -> Room:
         if room_id not in self.rooms:
-            self.rooms[room_id] = Room(room_id, board_size=board_size, komi=komi)
+            self.rooms[room_id] = Room(room_id, board_size=board_size, komi=komi, handicap=handicap)
         return self.rooms[room_id]
 
-    async def connect_client(self, websocket: WebSocket, room_id: str, player_id: str, board_size: int = 19, komi: float = 6.5) -> Tuple[Room, str]:
+    async def connect_client(self, websocket: WebSocket, room_id: str, player_id: str, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0) -> Tuple[Room, str]:
         await websocket.accept()
-        room = self.get_or_create_room(room_id, board_size=board_size, komi=komi)
+        room = self.get_or_create_room(room_id, board_size=board_size, komi=komi, handicap=handicap)
+
         
         async with room.lock:
             role = room.register_player(player_id)

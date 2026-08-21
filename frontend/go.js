@@ -32,7 +32,8 @@
   const urlParams = new URLSearchParams(window.location.search);
   let currentRoomId = urlParams.get('room') || 'stonesync-main';
   let currentBoardSize = parseInt(urlParams.get('board_size') || '19', 10);
-  let currentKomi = parseFloat(urlParams.get('komi') || '6.5');
+  let currentHandicap = parseInt(urlParams.get('handicap') || '0', 10);
+  let currentKomi = urlParams.has('komi') ? parseFloat(urlParams.get('komi')) : (currentHandicap >= 2 ? 0.5 : 6.5);
 
   if (![9, 13, 19].includes(currentBoardSize)) {
     currentBoardSize = 19;
@@ -41,12 +42,14 @@
   // --- 3. DOM Elements ---
   const roomInput = document.getElementById('room-input');
   const boardSizeSelect = document.getElementById('board-size-select');
+  const handicapSelect = document.getElementById('handicap-select');
   const komiInput = document.getElementById('komi-input');
   const themeSelect = document.getElementById('theme-select');
   const volumeRange = document.getElementById('volume-range');
   const shareUrlInput = document.getElementById('share-url-input');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const roomForm = document.getElementById('room-form');
+
 
   const playerRoleBadge = document.getElementById('player-role-badge');
   const turnIndicator = document.getElementById('turn-indicator');
@@ -201,9 +204,10 @@
   function updateUrlAndControls() {
     roomInput.value = currentRoomId;
     boardSizeSelect.value = currentBoardSize.toString();
+    if (handicapSelect) handicapSelect.value = currentHandicap.toString();
     komiInput.value = currentKomi.toString();
 
-    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&board_size=${currentBoardSize}&komi=${currentKomi}`;
+    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
     shareUrlInput.value = fullUrl;
     window.history.replaceState({}, '', fullUrl);
   }
@@ -217,10 +221,20 @@
     });
   });
 
+  if (handicapSelect) {
+    handicapSelect.addEventListener('change', () => {
+      const val = parseInt(handicapSelect.value, 10);
+      if (val >= 2 && komiInput.value === '6.5') {
+        komiInput.value = '0.5';
+      }
+    });
+  }
+
   roomForm.addEventListener('submit', (e) => {
     e.preventDefault();
     currentRoomId = roomInput.value.trim() || 'stonesync-main';
     currentBoardSize = parseInt(boardSizeSelect.value, 10);
+    currentHandicap = handicapSelect ? parseInt(handicapSelect.value, 10) : 0;
     currentKomi = parseFloat(komiInput.value);
     updateUrlAndControls();
     connectWebSocket();
@@ -246,7 +260,8 @@
     }
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&board_size=${currentBoardSize}&komi=${currentKomi}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+
 
     socket = new WebSocket(wsUrl);
 
