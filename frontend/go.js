@@ -270,8 +270,7 @@
     });
   }
 
-  // --- Top Bar MP3 Audio Player Playlist ---
-  const mp3Playlist = [
+  let mp3Playlist = [
     { title: "🪨 Go Game Piece Removed", src: "/static/go-sounds/GoGame-PieceRemoved.mp3" },
     { title: "🎵 Zen Satisfying Track", src: "/static/go-sounds/Zen-Ambient-Track.wav" },
     { title: "🔊 Stone Thwack Impact 1", src: "/static/go-sounds/GoGame-Thwack1.wav" },
@@ -281,6 +280,20 @@
   ];
   let currentTrackIdx = 0;
 
+  async function fetchAudioTracks() {
+    try {
+      const resp = await fetch('/api/audio-tracks');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.tracks && data.tracks.length > 0) {
+          mp3Playlist = data.tracks;
+          soundAssetUrls.length = 0;
+          data.tracks.forEach(t => soundAssetUrls.push(t.src));
+          loadTrack(0);
+        }
+      }
+    } catch (e) {}
+  }
 
   const mp3Audio = document.getElementById('mp3-audio-element');
   const btnMp3Play = document.getElementById('btn-mp3-play');
@@ -290,12 +303,13 @@
   const mp3Time = document.getElementById('mp3-track-time');
 
   function loadTrack(idx) {
-    if (!mp3Audio || !mp3Playlist[idx]) return;
+    if (!mp3Audio || !mp3Playlist || !mp3Playlist[idx]) return;
     currentTrackIdx = idx;
     const track = mp3Playlist[currentTrackIdx];
     mp3Audio.src = track.src;
     if (mp3Title) mp3Title.textContent = track.title;
   }
+
 
   function togglePlayPause() {
     if (!mp3Audio) return;
@@ -345,6 +359,8 @@
   }
 
   loadTrack(0);
+  fetchAudioTracks();
+
 
   if (btnZenAmbient) {
 

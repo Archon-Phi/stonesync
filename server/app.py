@@ -51,6 +51,30 @@ async def get_go_page():
         return FileResponse(str(html_file), media_type="text/html")
     return {"error": "go.html not found"}
 
+@app.get("/api/audio-tracks")
+async def get_audio_tracks():
+    tracks = []
+    if SOUNDS_DIR.exists():
+        for file in sorted(SOUNDS_DIR.iterdir()):
+            if file.suffix.lower() in [".mp3", ".wav", ".ogg", ".flac", ".m4a"]:
+                clean_name = file.stem.replace("_", " ").replace("-", " ")
+                icon = "🎵" if file.suffix.lower() == ".mp3" else "🔊"
+                if "Removed" in file.stem or "Piece" in file.stem:
+                    icon = "🪨"
+                elif "Rain" in file.stem or "Kyoto" in file.stem:
+                    icon = "🌧️"
+                elif "Zen" in file.stem or "Garden" in file.stem:
+                    icon = "🧘"
+
+                tracks.append({
+                    "title": f"{icon} {clean_name}",
+                    "filename": file.name,
+                    "src": f"/static/go-sounds/{file.name}",
+                    "type": file.suffix.lower()
+                })
+    return {"tracks": tracks}
+
+
 @app.websocket("/ws/go/{room_id}")
 async def websocket_go_endpoint(
     websocket: WebSocket,
