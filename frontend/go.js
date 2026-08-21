@@ -126,8 +126,9 @@
     try {
       preloadAudioAssets();
       const randomIndex = Math.floor(Math.random() * 4) + 1;
-      const soundUrl = `/static/go-sounds/GoGame-Thwack${randomIndex}.wav`;
+      const soundUrl = `./go-sounds/GoGame-Thwack${randomIndex}.wav`;
       if (playPreloadedSound(soundUrl, 0.85)) return;
+      if (playPreloadedSound(`/static/go-sounds/GoGame-Thwack${randomIndex}.wav`, 0.85)) return;
 
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
@@ -160,7 +161,9 @@
     if (masterVolume <= 0) return;
     try {
       preloadAudioAssets();
+      if (playPreloadedSound('./go-sounds/GoGame-PieceRemoved.mp3', 0.9)) return;
       if (playPreloadedSound('/static/go-sounds/GoGame-PieceRemoved.mp3', 0.9)) return;
+
 
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
@@ -271,11 +274,19 @@
   }
 
   let mp3Playlist = [
-    { title: "🎵 Binary Stream", src: "/static/music/Binary_Stream.mp3" },
-    { title: "🎵 Protocol Flow", src: "/static/music/Protocol_Flow (1).mp3" },
-    { title: "🎵 System Core", src: "/static/music/System_Core.mp3" },
-    { title: "🎵 Standard Model", src: "/static/music/Standard_Model.mp3" }
+    { title: "🎵 Binary Stream", src: "./music/Binary_Stream.mp3" },
+    { title: "🎵 Fsica Dembow", src: "./music/Fsica_Dembow.mp3" },
+    { title: "🎵 Kernel Panic", src: "./music/Kernel_Panic.mp3" },
+    { title: "🎵 Protocol Flow", src: "./music/Protocol_Flow (1).mp3" },
+    { title: "🎵 Recursive Pattern Minimal Mix", src: "./music/Recursive_Pattern_Minimal_Mix.mp3" },
+    { title: "🎵 Standard Model", src: "./music/Standard_Model.mp3" },
+    { title: "🎵 Standard Model Flow", src: "./music/Standard_Model_Flow.mp3" },
+    { title: "🎵 System Core", src: "./music/System_Core.mp3" },
+    { title: "🎵 System Overlord", src: "./music/System_Overlord.mp3" },
+    { title: "🎵 Word Chain Dembow", src: "./music/Word_Chain_Dembow.mp3" },
+    { title: "🎵 Wormhole Topology", src: "./music/Wormhole_Topology.mp3" }
   ];
+
 
   let currentTrackIdx = 0;
 
@@ -429,12 +440,13 @@
 
   const soundBuffers = {};
   const soundAssetUrls = [
-    '/static/go-sounds/GoGame-Thwack1.wav',
-    '/static/go-sounds/GoGame-Thwack2.wav',
-    '/static/go-sounds/GoGame-Thwack3.wav',
-    '/static/go-sounds/GoGame-Thwack4.wav',
-    '/static/go-sounds/GoGame-PieceRemoved.mp3'
+    './go-sounds/GoGame-Thwack1.wav',
+    './go-sounds/GoGame-Thwack2.wav',
+    './go-sounds/GoGame-Thwack3.wav',
+    './go-sounds/GoGame-Thwack4.wav',
+    './go-sounds/GoGame-PieceRemoved.mp3'
   ];
+
 
   async function preloadAudioAssets() {
     const ctxAudio = getAudioContext();

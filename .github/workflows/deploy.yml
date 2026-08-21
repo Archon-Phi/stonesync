@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - feature/syncstone-updates
+  workflow_dispatch:
+
 
 permissions:
   contents: read
