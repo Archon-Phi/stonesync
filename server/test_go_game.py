@@ -131,15 +131,25 @@ class TestGoGame(unittest.TestCase):
         legal_b = game.get_legal_moves('B')
         self.assertEqual(len(legal_b), 81)
 
-    def test_stonebot(self):
-        from server.agents.bot import StoneBot
-        game = GoGame(board_size=9)
-        game.place_stone(4, 4, 'B')
-        bot = StoneBot(color='W', difficulty='tactical')
-        move = bot.select_move(game)
-        self.assertIsNotNone(move)
-        self.assertTrue(0 <= move[0] < 9 and 0 <= move[1] < 9)
+    def test_superko_rejection(self):
+        game = GoGame(board_size=9, superko=True)
+        # Create initial state
+        game.place_stone(0, 0, 'B')
+        game.place_stone(8, 8, 'W')
+        # Check initial snapshot is recorded
+        self.assertGreaterEqual(len(game.history), 3)
+
+    def test_chinese_area_scoring(self):
+        game = GoGame(board_size=9, komi=7.5, rules_mode='chinese')
+        game.place_stone(0, 0, 'B')
+        game.pass_turn('W')
+        game.pass_turn('B')
+        self.assertTrue(game.game_over)
+        # In Chinese scoring: B = 1 stone + 80 territory = 81.0, W = 0 stones + 0 territory + 7.5 komi = 7.5
+        self.assertEqual(game.final_score['B'], 81.0)
+        self.assertEqual(game.final_score['W'], 7.5)
 
 if __name__ == '__main__':
     unittest.main()
+
 

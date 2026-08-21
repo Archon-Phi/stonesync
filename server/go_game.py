@@ -44,7 +44,9 @@ class GoGame:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        rules_mode: str = 'japanese',
+        superko: bool = False
     ):
         if board_size not in (9, 13, 19):
             raise ValueError("Board size must be 9, 13, or 19")
@@ -53,6 +55,8 @@ class GoGame:
         if komi is None:
             komi = 0.5 if handicap >= 2 else 6.5
         self.komi = float(komi)
+        self.rules_mode = rules_mode.lower()
+        self.superko = superko
         self.reset(
             board_size=board_size,
             komi=komi,
@@ -61,7 +65,9 @@ class GoGame:
             main_time_sec=main_time_sec,
             byoyomi_periods=byoyomi_periods,
             byoyomi_time_sec=byoyomi_time_sec,
-            fischer_increment_sec=fischer_increment_sec
+            fischer_increment_sec=fischer_increment_sec,
+            rules_mode=rules_mode,
+            superko=superko
         )
 
     def reset(
@@ -73,7 +79,9 @@ class GoGame:
         main_time_sec: Optional[float] = None,
         byoyomi_periods: Optional[int] = None,
         byoyomi_time_sec: Optional[float] = None,
-        fischer_increment_sec: Optional[float] = None
+        fischer_increment_sec: Optional[float] = None,
+        rules_mode: Optional[str] = None,
+        superko: Optional[bool] = None
     ):
         if board_size is not None:
             if board_size not in (9, 13, 19):
@@ -83,6 +91,11 @@ class GoGame:
             self.handicap = handicap
         if komi is not None:
             self.komi = float(komi)
+        if rules_mode is not None:
+            self.rules_mode = rules_mode.lower()
+        if superko is not None:
+            self.superko = superko
+
 
         if time_control is not None:
             self.time_control = time_control
@@ -347,10 +360,14 @@ class GoGame:
         if len(my_liberties) == 0:
             raise ValueError("Suicide move is illegal")
 
-        # Ko rule check: forbid repeating the previous board state
+        # Ko / Superko rule check
         temp_snapshot = tuple(tuple(row) for row in temp_grid)
-        if len(self.history) >= 2 and temp_snapshot == self.history[-2]:
-            raise ValueError("Ko rule violation: illegal immediate recapture")
+        if self.superko:
+            if temp_snapshot in self.history:
+                raise ValueError("Superko rule violation: cannot repeat any previous board position")
+        else:
+            if len(self.history) >= 2 and temp_snapshot == self.history[-2]:
+                raise ValueError("Ko rule violation: illegal immediate recapture")
 
         # Update player's clock for current turn before switching
         self.update_clock_on_turn_change(now_ts)
@@ -424,8 +441,12 @@ class GoGame:
             return False
 
         temp_snapshot = tuple(tuple(row) for row in temp_grid)
-        if len(self.history) >= 2 and temp_snapshot == self.history[-2]:
-            return False
+        if self.superko:
+            if temp_snapshot in self.history:
+                return False
+        else:
+            if len(self.history) >= 2 and temp_snapshot == self.history[-2]:
+                return False
 
         return True
 
@@ -467,13 +488,20 @@ class GoGame:
                         territory['W'] += len(empty_region)
 
         self.territory = territory
-        b_score = float(territory['B'] + self.captures['B'])
-        w_score = float(territory['W'] + self.captures['W']) + self.komi
+        if self.rules_mode == 'chinese':
+            b_stones = sum(row.count('B') for row in self.grid)
+            w_stones = sum(row.count('W') for row in self.grid)
+            b_score = float(territory['B'] + b_stones)
+            w_score = float(territory['W'] + w_stones) + self.komi
+        else:
+            b_score = float(territory['B'] + self.captures['B'])
+            w_score = float(territory['W'] + self.captures['W']) + self.komi
 
         self.final_score = {
             'B': round(b_score, 1),
             'W': round(w_score, 1)
         }
+
 
         if b_score > w_score:
             self.winner = 'B'
