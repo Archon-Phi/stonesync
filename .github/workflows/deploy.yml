@@ -1,0 +1,50 @@
+name: Deploy StoneSync to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - feature/syncstone-updates
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build Static Site Bundle
+        run: |
+          mkdir -p build/go-sounds build/music
+          cp frontend/go.html build/index.html
+          cp frontend/go.html build/go.html
+          cp frontend/go.css build/go.css
+          cp frontend/go.js build/go.js
+          cp -r frontend/go-sounds/* build/go-sounds/ 2>/dev/null || true
+          cp -r frontend/music/* build/music/ 2>/dev/null || true
+          # Adjust static paths for GitHub Pages relative URL serving
+          sed -i 's/\/static\//.\//g' build/go.html build/index.html build/go.js
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'build'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

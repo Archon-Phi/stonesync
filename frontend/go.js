@@ -734,6 +734,17 @@
       }
     };
 
+    const isGitHubPages = window.location.hostname.endsWith('github.io');
+    if (isGitHubPages) {
+      if (playerRoleBadge) {
+        playerRoleBadge.textContent = 'GitHub Pages Mode (Offline Sandbox)';
+        playerRoleBadge.className = 'badge role-badge role-both';
+      }
+      showToast('⚡ Running on GitHub Pages — Offline Sandbox & AI Sensei Mode Active!', false);
+      currentMode = 'debug';
+      return;
+    }
+
     socket.onclose = () => {
       if (playerRoleBadge) {
         playerRoleBadge.textContent = 'Disconnected (Reconnecting...)';
@@ -743,13 +754,14 @@
         if (!socket || socket.readyState === WebSocket.CLOSED) {
           connectWebSocket();
         }
-      }, 3500);
+      }, 5000);
     };
 
     socket.onerror = (err) => {
-      console.warn('WebSocket Error:', err);
+      console.warn('WebSocket Connection Issue:', err);
     };
   }
+
 
   // --- 8. Clocks & Timers ---
   let clockInterval = null;
