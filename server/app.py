@@ -59,13 +59,32 @@ async def websocket_go_endpoint(
     board_size: int = Query(19),
     komi: float = Query(6.5),
     handicap: int = Query(0),
-    mode: str = Query("online")
+    mode: str = Query("online"),
+    time_control: str = Query("none"),
+    main_time_sec: float = Query(600.0),
+    byoyomi_periods: int = Query(3),
+    byoyomi_time_sec: float = Query(30.0),
+    fischer_increment_sec: float = Query(5.0)
 ):
 
     is_solo = (mode == "solo")
+    is_ai = (mode == "ai")
     room, role = await room_manager.connect_client(
-        websocket, room_id, player_id, board_size=board_size, komi=komi, handicap=handicap, is_solo=is_solo
+        websocket,
+        room_id,
+        player_id,
+        board_size=board_size,
+        komi=komi,
+        handicap=handicap,
+        is_solo=is_solo,
+        is_ai=is_ai,
+        time_control=time_control,
+        main_time_sec=main_time_sec,
+        byoyomi_periods=byoyomi_periods,
+        byoyomi_time_sec=byoyomi_time_sec,
+        fischer_increment_sec=fischer_increment_sec
     )
+
 
 
     try:

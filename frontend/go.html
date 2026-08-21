@@ -3,201 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StoneSync - Real-Time Multiplayer Go</title>
-  <meta name="description" content="StoneSync is a standalone online multiplayer Go (Weiqi/Baduk) web application with authoritative rule enforcement, canvas board, audio feedback, and instant URL room sharing.">
+  <title>StoneSync — Real-Time Go</title>
+  <meta name="description" content="StoneSync is a clean, minimal online multiplayer Go application with real-time WebSocket gameplay, time controls, and AI bot play.">
   <link rel="stylesheet" href="/static/go.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header Hero Banner -->
-    <header class="app-header">
-      <div class="header-visual">
-        <img src="/static/stonesync-header.jpg" alt="StoneSync - Online 2 Player Go Banner" id="header-img">
+  <div class="app-wrapper">
+    
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="brand-logo">
+          <span class="stone-icon stone-black"></span>
+          <span class="stone-icon stone-white" style="margin-left: -6px;"></span>
+        </div>
+        <h1 class="brand-title">STONE<span>SYNC</span></h1>
+      </div>
+
+      <div class="nav-actions">
+        <div class="room-pill">
+          <span class="status-dot online"></span>
+          <span id="nav-room-id" class="mono">stonesync-main</span>
+        </div>
+
+        <div class="theme-picker">
+          <select id="theme-select" title="Board Theme">
+            <option value="kaya" selected>🪵 Kaya Wood</option>
+            <option value="obsidian">💎 Obsidian</option>
+            <option value="cyberpunk">⚡ Cyberpunk</option>
+          </select>
+        </div>
+
+        <button type="button" id="btn-export-sgf" class="btn btn-sm btn-ghost" title="Export SGF Game Record">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          SGF
+        </button>
+
+        <label for="input-import-sgf" class="btn btn-sm btn-ghost" title="Import SGF File" style="margin: 0; cursor: pointer;">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Import
+          <input type="file" id="input-import-sgf" accept=".sgf" style="display: none;">
+        </label>
       </div>
     </header>
 
+    <!-- Main Content Area -->
+    <main class="main-layout">
 
-    <!-- Main Grid Layout -->
-    <main class="main-content">
-      <!-- Left Column: Controls & Game Stats -->
-      <aside class="sidebar">
-        <!-- Room Setup & Share Card -->
-        <section class="card room-card">
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            Room & Match Config
-          </h2>
-          <form id="room-form" class="form-grid">
-            <div class="form-group">
-              <label for="room-input">Room ID</label>
-              <input type="text" id="room-input" placeholder="e.g. main-match" required>
-            </div>
-            <div class="form-group">
-              <label for="mode-select">Game Mode</label>
-              <select id="mode-select">
-                <option value="online" selected>🌐 Online Multiplayer (2 Players)</option>
-                <option value="solo">🎮 Pass & Play (Solo Practice)</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="board-size-select">Board Size</label>
-                <select id="board-size-select">
-                  <option value="9">9 x 9</option>
-                  <option value="13">13 x 13</option>
-                  <option value="19" selected>19 x 19</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="handicap-select">Handicap</label>
-                <select id="handicap-select">
-                  <option value="0" selected>Even (0)</option>
-                  <option value="2">2 Stones</option>
-                  <option value="3">3 Stones</option>
-                  <option value="4">4 Stones</option>
-                  <option value="5">5 Stones</option>
-                  <option value="6">6 Stones</option>
-                  <option value="7">7 Stones</option>
-                  <option value="8">8 Stones</option>
-                  <option value="9">9 Stones</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="komi-input">Komi</label>
-                <input type="number" id="komi-input" step="0.5" value="6.5">
-              </div>
-            </div>
-
-
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="theme-select">Board Theme</label>
-                <select id="theme-select">
-                  <option value="kaya" selected>🪵 Classic Kaya Wood</option>
-                  <option value="obsidian">💎 Obsidian Glass</option>
-                  <option value="cyberpunk">⚡ Cyberpunk Neon</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="volume-range">Sound Volume</label>
-                <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.8">
-              </div>
-            </div>
-
-            <button type="submit" id="btn-join-room" class="btn btn-primary">Join / Create Room</button>
-          </form>
-
-
-          <div class="share-url-container">
-            <label>Shareable Room URL</label>
-            <div class="share-input-wrap">
-              <input type="text" id="share-url-input" readonly>
-              <button type="button" id="btn-copy-url" class="btn btn-secondary">Copy</button>
-            </div>
-            
-            <div class="form-row" style="margin-top: 10px;">
-              <button type="button" id="btn-export-sgf" class="btn btn-secondary btn-action">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Export SGF
-              </button>
-              <label for="input-import-sgf" class="btn btn-secondary btn-action" style="margin: 0; text-align: center; cursor: pointer;">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                Import SGF
-                <input type="file" id="input-import-sgf" accept=".sgf" style="display: none;">
-              </label>
-            </div>
-          </div>
-
-        </section>
-
-        <!-- Match Status Card -->
-        <section class="card status-card">
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            Match Status
-          </h2>
-          
-          <div class="status-grid">
-            <div class="status-item">
-              <span class="status-label">Your Role</span>
-              <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
-            </div>
-
-            <div class="status-item">
-              <span class="status-label">Current Turn</span>
-              <span id="turn-indicator" class="badge turn-badge turn-black">
-                <span class="stone-icon stone-black"></span>
-                Black's Turn
-              </span>
-            </div>
-
-            <div class="status-item">
-              <span class="status-label">Pass Count</span>
-              <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
-            </div>
-
-            <div class="status-item">
-              <span class="status-label">Last Move</span>
-              <span id="last-move-text" class="status-value mono">—</span>
-            </div>
-          </div>
-
-          <!-- Captures Section -->
-          <div class="captures-container">
-            <div class="capture-box capture-black">
-              <div class="capture-header">
-                <span class="stone-icon stone-black"></span>
-                <span>Black Captures</span>
-              </div>
-              <span id="black-captures" class="capture-count">0</span>
-            </div>
-
-            <div class="capture-box capture-white">
-              <div class="capture-header">
-                <span class="stone-icon stone-white"></span>
-                <span>White Captures</span>
-              </div>
-              <span id="white-captures" class="capture-count">0</span>
-            </div>
-          </div>
-
-          <!-- In-Game Action Buttons -->
-          <div class="actions-group">
-            <button id="btn-pass" class="btn btn-action btn-pass" disabled>
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              Pass
-            </button>
-            <button id="btn-heatmap" class="btn btn-action btn-secondary">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
-              Heatmap
-            </button>
-            <button id="btn-reset" class="btn btn-action btn-reset">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-              Reset
-            </button>
-          </div>
-
-        </section>
-
-        <!-- Connected Players Card -->
-        <section class="card players-card">
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Connected Players
-          </h2>
-          <div id="players-list" class="players-list">
-            <span class="muted">No players connected.</span>
-          </div>
-        </section>
-      </aside>
-
-      <!-- Right Column: Interactive Go Board Canvas -->
-      <section class="board-column">
-        <div class="board-wrapper">
+      <!-- Left / Primary Center Column: Go Board & Primary Action Bar -->
+      <section class="board-section">
+        <div class="board-container">
           <div id="toast-banner" class="toast toast-hidden"></div>
 
           <!-- Board Canvas Container -->
@@ -205,42 +63,250 @@
             <canvas id="go-board"></canvas>
           </div>
 
-          <!-- Game Over Modal Overlay -->
-          <div id="game-over-overlay" class="modal-overlay modal-hidden">
-            <div class="modal-card">
-              <div class="modal-header">
-                <h3 id="game-result-title">Game Complete!</h3>
+          <!-- Primary In-Game Action Bar -->
+          <div class="board-actions">
+            <button id="btn-pass" class="btn btn-action btn-pass" disabled>
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              Pass Turn
+            </button>
+            <button id="btn-heatmap" class="btn btn-action btn-secondary">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
+              Heatmap
+            </button>
+            <button id="btn-resign" class="btn btn-action btn-danger" disabled>
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+              Resign
+            </button>
+            <button id="btn-reset" class="btn btn-action btn-reset">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              New Match
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Sidebar Panels -->
+      <aside class="sidebar-section">
+        
+        <!-- Live Match Clocks & Score Panel -->
+        <section class="card match-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Live Match Clocks
+            </h2>
+            <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+          </div>
+
+          <!-- Digital Clocks -->
+          <div class="clocks-container" id="clocks-container" style="display: none;">
+            <div class="clock-box" id="clock-box-black">
+              <div class="clock-player">
+                <span class="stone-icon stone-black"></span>
+                <span>Black</span>
               </div>
-              <div class="modal-body">
-                <div class="winner-announcement" id="winner-text">Black Wins!</div>
-                <div class="score-breakdown">
-                  <div class="score-card score-black">
-                    <h4>Black (First)</h4>
-                    <p class="score-total" id="black-total-score">0</p>
-                    <span class="score-detail" id="black-score-detail">Territory: 0 | Captures: 0</span>
-                  </div>
-                  <div class="score-card score-white">
-                    <h4>White (+<span id="komi-display">6.5</span>)</h4>
-                    <p class="score-total" id="white-total-score">0</p>
-                    <span class="score-detail" id="white-score-detail">Territory: 0 | Captures: 0 | Komi: 6.5</span>
-                  </div>
-                </div>
+              <span class="clock-time mono" id="clock-time-black">10:00</span>
+              <span class="clock-sub" id="clock-sub-black"></span>
+            </div>
+
+            <div class="clock-box" id="clock-box-white">
+              <div class="clock-player">
+                <span class="stone-icon stone-white"></span>
+                <span>White</span>
               </div>
-              <div class="modal-footer">
-                <button id="btn-modal-reset" class="btn btn-primary">Play Again (Reset)</button>
-                <button id="btn-modal-close" class="btn btn-secondary">Review Board</button>
-              </div>
+              <span class="clock-time mono" id="clock-time-white">10:00</span>
+              <span class="clock-sub" id="clock-sub-white"></span>
             </div>
           </div>
 
-        </div>
-      </section>
+          <!-- Match Telemetry Grid -->
+          <div class="telemetry-grid">
+            <div class="telemetry-item">
+              <span class="telemetry-label">Current Turn</span>
+              <span id="turn-indicator" class="badge turn-badge turn-black">
+                <span class="stone-icon stone-black"></span> Black
+              </span>
+            </div>
+            <div class="telemetry-item">
+              <span class="telemetry-label">Passes</span>
+              <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
+            </div>
+            <div class="telemetry-item">
+              <span class="telemetry-label">Last Move</span>
+              <span id="last-move-text" class="status-value mono">—</span>
+            </div>
+          </div>
+
+          <!-- Captures Display -->
+          <div class="captures-bar">
+            <div class="cap-box cap-black">
+              <span class="cap-label"><span class="stone-icon stone-black"></span> Captures</span>
+              <span id="black-captures" class="cap-num">0</span>
+            </div>
+            <div class="cap-box cap-white">
+              <span class="cap-label"><span class="stone-icon stone-white"></span> Captures</span>
+              <span id="white-captures" class="cap-num">0</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Room Settings & Options Panel -->
+        <section class="card config-card">
+          <details class="config-accordion" open>
+            <summary class="card-title accordion-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              Room &amp; Game Settings
+            </summary>
+
+            <form id="room-form" class="form-grid" style="margin-top: 14px;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="room-input">Room Name</label>
+                  <input type="text" id="room-input" value="stonesync-main" required>
+                </div>
+                <div class="form-group">
+                  <label for="mode-select">Game Mode</label>
+                  <select id="mode-select">
+                    <option value="online" selected>🌐 Online 2-Player</option>
+                    <option value="ai">🤖 vs AI (StoneBot)</option>
+                    <option value="solo">🎮 Pass &amp; Play</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="board-size-select">Board</label>
+                  <select id="board-size-select">
+                    <option value="9">9 x 9</option>
+                    <option value="13">13 x 13</option>
+                    <option value="19" selected>19 x 19</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="handicap-select">Handicap</label>
+                  <select id="handicap-select">
+                    <option value="0" selected>Even (0)</option>
+                    <option value="2">2 Stones</option>
+                    <option value="3">3 Stones</option>
+                    <option value="4">4 Stones</option>
+                    <option value="5">5 Stones</option>
+                    <option value="9">9 Stones</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="komi-input">Komi</label>
+                  <input type="number" id="komi-input" step="0.5" value="6.5">
+                </div>
+              </div>
+
+              <!-- Time Control Config -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="tc-select">Clock Type</label>
+                  <select id="tc-select">
+                    <option value="none" selected>Untimed</option>
+                    <option value="byoyomi">⏱️ Byo-yomi</option>
+                    <option value="absolute">⚡ Absolute</option>
+                    <option value="fischer">⏳ Fischer</option>
+                  </select>
+                </div>
+                <div class="form-group" id="main-time-group" style="display: none;">
+                  <label for="main-time-input">Main (Min)</label>
+                  <input type="number" id="main-time-input" min="1" max="180" value="10">
+                </div>
+                <div class="form-group" id="byoyomi-group" style="display: none;">
+                  <label for="byoyomi-periods-input">Periods</label>
+                  <input type="number" id="byoyomi-periods-input" min="1" max="10" value="3">
+                </div>
+              </div>
+
+              <div class="form-group" style="display: none;">
+                <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.8">
+              </div>
+
+              <button type="submit" id="btn-join-room" class="btn btn-primary btn-full">
+                Apply &amp; Rejoin Room
+              </button>
+            </form>
+
+            <div class="share-url-container">
+              <div class="share-input-wrap">
+                <input type="text" id="share-url-input" readonly>
+                <button type="button" id="btn-copy-url" class="btn btn-secondary btn-sm">Copy Link</button>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Room Chat & Reactions Panel -->
+        <section class="card chat-card">
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Room Chat
+          </h2>
+          
+          <div class="reactions-bar">
+            <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
+            <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
+            <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
+            <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
+            <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
+            <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
+          </div>
+
+          <div id="chat-messages" class="chat-messages">
+            <span class="muted">Welcome to room chat!</span>
+          </div>
+
+          <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
+            <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
+          </form>
+        </section>
+
+        <!-- Connected Players List -->
+        <section class="card players-card">
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Connected Players
+          </h2>
+          <div id="players-list" class="players-list">
+            <span class="muted">Connecting...</span>
+          </div>
+        </section>
+
+      </aside>
     </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>StoneSync Go Engine &copy; 2026 · Built with FastAPI &amp; HTML5 WebSockets</p>
-    </footer>
+    <!-- Game Over Overlay Modal -->
+    <div id="game-over-overlay" class="modal-overlay modal-hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="game-result-title">Match Finished</h3>
+        </div>
+        <div class="modal-body">
+          <div class="winner-announcement" id="winner-text">Black Wins!</div>
+          <div class="score-breakdown">
+            <div class="score-card score-black">
+              <h4>Black</h4>
+              <p class="score-total" id="black-total-score">0</p>
+              <span class="score-detail" id="black-score-detail">Territory: 0 | Captures: 0</span>
+            </div>
+            <div class="score-card score-white">
+              <h4>White (+<span id="komi-display">6.5</span>)</h4>
+              <p class="score-total" id="white-total-score">0</p>
+              <span class="score-detail" id="white-score-detail">Territory: 0 | Captures: 0 | Komi: 6.5</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-modal-reset" class="btn btn-primary">Play Again</button>
+          <button id="btn-modal-close" class="btn btn-secondary">Review Board</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script src="/static/go.js"></script>

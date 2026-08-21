@@ -36,6 +36,11 @@
   let currentHandicap = parseInt(urlParams.get('handicap') || '0', 10);
   let currentKomi = urlParams.has('komi') ? parseFloat(urlParams.get('komi')) : (currentHandicap >= 2 ? 0.5 : 6.5);
 
+  let currentTc = urlParams.get('tc') || 'none';
+  let currentMainTimeMin = parseInt(urlParams.get('main_time') || '10', 10);
+  let currentByoPeriods = parseInt(urlParams.get('byo_p') || '3', 10);
+  let currentByoTimeSec = parseInt(urlParams.get('byo_t') || '30', 10);
+
   if (![9, 13, 19].includes(currentBoardSize)) {
     currentBoardSize = 19;
   }
@@ -46,13 +51,25 @@
   const boardSizeSelect = document.getElementById('board-size-select');
   const handicapSelect = document.getElementById('handicap-select');
   const komiInput = document.getElementById('komi-input');
+  const tcSelect = document.getElementById('tc-select');
+  const mainTimeGroup = document.getElementById('main-time-group');
+  const mainTimeInput = document.getElementById('main-time-input');
+  const byoyomiGroup = document.getElementById('byoyomi-group');
+  const byoyomiPeriodsInput = document.getElementById('byoyomi-periods-input');
+
   const themeSelect = document.getElementById('theme-select');
   const volumeRange = document.getElementById('volume-range');
   const shareUrlInput = document.getElementById('share-url-input');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const roomForm = document.getElementById('room-form');
 
-
+  const clocksContainer = document.getElementById('clocks-container');
+  const clockBoxBlack = document.getElementById('clock-box-black');
+  const clockBoxWhite = document.getElementById('clock-box-white');
+  const clockTimeBlack = document.getElementById('clock-time-black');
+  const clockTimeWhite = document.getElementById('clock-time-white');
+  const clockSubBlack = document.getElementById('clock-sub-black');
+  const clockSubWhite = document.getElementById('clock-sub-white');
 
   const playerRoleBadge = document.getElementById('player-role-badge');
   const turnIndicator = document.getElementById('turn-indicator');
@@ -64,8 +81,14 @@
 
   const btnPass = document.getElementById('btn-pass');
   const btnHeatmap = document.getElementById('btn-heatmap');
+  const btnResign = document.getElementById('btn-resign');
   const btnReset = document.getElementById('btn-reset');
   const toastBanner = document.getElementById('toast-banner');
+
+  const chatMessages = document.getElementById('chat-messages');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+  const emojiButtons = document.querySelectorAll('.btn-emoji');
 
   const canvasContainer = document.getElementById('canvas-container');
   const canvas = document.getElementById('go-board');
@@ -105,22 +128,16 @@
       if (!ctxAudio) return;
 
       const now = ctxAudio.currentTime;
-
-      // Distance from board center (0 at center, 1 at corner)
       const center = (size - 1) / 2;
       const distFromCenter = Math.hypot(row - center, col - center) / (center * Math.SQRT2 || 1);
-
-      // Pitch shift: center = deep 380Hz, corner = crisp 680Hz
       const baseFreq = 380 + (distFromCenter * 300);
 
       const osc = ctxAudio.createOscillator();
       const gain = ctxAudio.createGain();
-
       osc.type = 'sine';
       osc.frequency.setValueAtTime(baseFreq, now);
       osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.4, now + 0.08);
 
-      // Sharp wood impact envelope
       gain.gain.setValueAtTime(masterVolume * 0.85, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
@@ -130,7 +147,6 @@
       osc.start(now);
       osc.stop(now + 0.08);
 
-      // Soft high-frequency transient click
       const noiseOsc = ctxAudio.createOscillator();
       const noiseGain = ctxAudio.createGain();
       noiseOsc.type = 'triangle';
@@ -204,17 +220,45 @@
     renderBoard();
   });
 
+  function syncTcFieldsVisibility() {
+    const val = tcSelect.value;
+    if (val === 'none') {
+      mainTimeGroup.style.display = 'none';
+      byoyomiGroup.style.display = 'none';
+    } else if (val === 'byoyomi') {
+      mainTimeGroup.style.display = 'flex';
+      byoyomiGroup.style.display = 'flex';
+    } else {
+      mainTimeGroup.style.display = 'flex';
+      byoyomiGroup.style.display = 'none';
+    }
+  }
+
+  if (tcSelect) {
+    tcSelect.value = currentTc;
+    syncTcFieldsVisibility();
+    tcSelect.addEventListener('change', syncTcFieldsVisibility);
+  }
+
   function updateUrlAndControls() {
     roomInput.value = currentRoomId;
+    const navRoomId = document.getElementById('nav-room-id');
+    if (navRoomId) navRoomId.textContent = currentRoomId;
     if (modeSelect) modeSelect.value = currentMode;
     boardSizeSelect.value = currentBoardSize.toString();
     if (handicapSelect) handicapSelect.value = currentHandicap.toString();
     komiInput.value = currentKomi.toString();
 
-    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+    if (tcSelect) tcSelect.value = currentTc;
+    if (mainTimeInput) mainTimeInput.value = currentMainTimeMin.toString();
+    if (byoyomiPeriodsInput) byoyomiPeriodsInput.value = currentByoPeriods.toString();
+    syncTcFieldsVisibility();
+
+    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&tc=${currentTc}&main_time=${currentMainTimeMin}&byo_p=${currentByoPeriods}`;
     shareUrlInput.value = fullUrl;
     window.history.replaceState({}, '', fullUrl);
   }
+
 
   btnCopyUrl.addEventListener('click', () => {
     shareUrlInput.select();
@@ -241,6 +285,11 @@
     currentBoardSize = parseInt(boardSizeSelect.value, 10);
     currentHandicap = handicapSelect ? parseInt(handicapSelect.value, 10) : 0;
     currentKomi = parseFloat(komiInput.value);
+
+    if (tcSelect) currentTc = tcSelect.value;
+    if (mainTimeInput) currentMainTimeMin = parseInt(mainTimeInput.value, 10) || 10;
+    if (byoyomiPeriodsInput) currentByoPeriods = parseInt(byoyomiPeriodsInput.value, 10) || 3;
+
     updateUrlAndControls();
     connectWebSocket();
   });
@@ -283,7 +332,12 @@
       captures: { B: 0, W: 0 },
       game_over: false,
       grid: grid,
-      last_move: null
+      last_move: null,
+      time_control: 'none',
+      clocks: {
+        B: { main_time: 600, periods: 3, period_time: 30 },
+        W: { main_time: 600, periods: 3, period_time: 30 }
+      }
     };
   }
 
@@ -298,7 +352,8 @@
 
     const host = window.location.host || '127.0.0.1:8080';
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+    const mainTimeSec = currentMainTimeMin * 60;
+    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
 
     try {
       socket = new WebSocket(wsUrl);
@@ -317,6 +372,10 @@
         const data = JSON.parse(event.data);
         if (data.type === 'state') {
           handleStateUpdate(data);
+        } else if (data.type === 'chat') {
+          handleChatMessage(data.chat);
+        } else if (data.type === 'reaction') {
+          handleReaction(data);
         } else if (data.type === 'error') {
           showToast(data.message, true);
         }
@@ -342,8 +401,72 @@
     };
   }
 
+  // --- 8. Clocks & Timers ---
+  let clockInterval = null;
 
-  // --- 8. Handle State Updates ---
+  function formatSeconds(sec) {
+    if (sec <= 0) return "00:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function updateClockUI() {
+    if (!currentGameState || !currentGameState.clocks || currentGameState.time_control === 'none') {
+      clocksContainer.style.display = 'none';
+      return;
+    }
+
+    clocksContainer.style.display = 'grid';
+    const bClock = currentGameState.clocks.B;
+    const wClock = currentGameState.clocks.W;
+    const tc = currentGameState.time_control;
+    const activePlayer = currentGameState.current_player;
+
+    // Black Clock
+    let bMain = bClock.main_time;
+    let bSubText = "";
+    if (tc === 'byoyomi') {
+      if (bMain > 0) {
+        bSubText = `Main Time (${bClock.periods} period${bClock.periods === 1 ? '' : 's'} left)`;
+      } else {
+        bMain = bClock.period_time;
+        bSubText = `Byo-yomi: ${bClock.periods} period${bClock.periods === 1 ? '' : 's'}`;
+      }
+    } else if (tc === 'fischer') {
+      bSubText = `+${currentGameState.fischer_increment_sec || 5}s per move`;
+    }
+
+    clockTimeBlack.textContent = formatSeconds(bMain);
+    clockSubBlack.textContent = bSubText;
+
+    // White Clock
+    let wMain = wClock.main_time;
+    let wSubText = "";
+    if (tc === 'byoyomi') {
+      if (wMain > 0) {
+        wSubText = `Main Time (${wClock.periods} period${wClock.periods === 1 ? '' : 's'} left)`;
+      } else {
+        wMain = wClock.period_time;
+        wSubText = `Byo-yomi: ${wClock.periods} period${wClock.periods === 1 ? '' : 's'}`;
+      }
+    } else if (tc === 'fischer') {
+      wSubText = `+${currentGameState.fischer_increment_sec || 5}s per move`;
+    }
+
+    clockTimeWhite.textContent = formatSeconds(wMain);
+    clockSubWhite.textContent = wSubText;
+
+    // Active highlights & urgency
+    const isGameOver = currentGameState.game_over;
+    clockBoxBlack.classList.toggle('clock-active', activePlayer === 'B' && !isGameOver);
+    clockBoxWhite.classList.toggle('clock-active', activePlayer === 'W' && !isGameOver);
+
+    clockBoxBlack.classList.toggle('clock-urgent', activePlayer === 'B' && bMain <= 10 && !isGameOver);
+    clockBoxWhite.classList.toggle('clock-urgent', activePlayer === 'W' && wMain <= 10 && !isGameOver);
+  }
+
+  // --- 9. Handle State Updates ---
   function handleStateUpdate(data) {
     const gameState = data.game_state;
     currentGameState = gameState;
@@ -355,7 +478,10 @@
       myRole = me ? me.color : 'observer';
     }
 
-    // Audio spatial sound calculation
+    if (data.chat_history) {
+      renderChatHistory(data.chat_history);
+    }
+
     const totalCaptures = (gameState.captures.B || 0) + (gameState.captures.W || 0);
     if (data.last_action) {
       if (data.last_action.captured > 0 || totalCaptures > prevCapturesCount) {
@@ -373,6 +499,7 @@
     updateLastMove(gameState);
     updatePlayersList(data.players);
     updateButtons(gameState);
+    updateClockUI();
 
     if (gameState.game_over) {
       showGameOverModal(gameState);
@@ -381,6 +508,63 @@
     }
 
     renderBoard();
+  }
+
+  function renderChatHistory(history) {
+    if (!chatMessages) return;
+    if (!history || history.length === 0) {
+      chatMessages.innerHTML = '<span class="muted">Welcome to room chat!</span>';
+      return;
+    }
+
+    chatMessages.innerHTML = history.map(c => `
+      <div class="chat-item">
+        <div class="chat-meta">
+          <span class="mono">${c.short_id}</span>
+          <span class="badge ${c.role === 'B' ? 'role-black' : c.role === 'W' ? 'role-white' : 'role-observer'}" style="padding: 1px 6px; font-size: 0.7rem;">${c.role}</span>
+          <span>${c.timestamp}</span>
+        </div>
+        <div class="chat-text">${escapeHtml(c.text)}</div>
+      </div>
+    `).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function handleChatMessage(c) {
+    if (!chatMessages) return;
+    const div = document.createElement('div');
+    div.className = 'chat-item';
+    div.innerHTML = `
+      <div class="chat-meta">
+        <span class="mono">${c.short_id}</span>
+        <span class="badge ${c.role === 'B' ? 'role-black' : c.role === 'W' ? 'role-white' : 'role-observer'}" style="padding: 1px 6px; font-size: 0.7rem;">${c.role}</span>
+        <span>${c.timestamp}</span>
+      </div>
+      <div class="chat-text">${escapeHtml(c.text)}</div>
+    `;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function handleReaction(data) {
+    const el = document.createElement('div');
+    el.className = 'floating-reaction';
+    el.textContent = data.emoji;
+    
+    // Position floating emoji over canvas
+    const rect = canvasContainer.getBoundingClientRect();
+    const left = rect.width / 2 + (Math.random() * 80 - 40);
+    const top = rect.height / 2 + (Math.random() * 80 - 40);
+    
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+
+    canvasContainer.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   function updateRoleBadge() {
@@ -449,8 +633,9 @@
   }
 
   function updateButtons(state) {
-    const isMyTurn = (myRole === 'B' && state.current_player === 'B') || (myRole === 'W' && state.current_player === 'W');
+    const isMyTurn = (currentMode === 'solo') || (myRole === 'B' && state.current_player === 'B') || (myRole === 'W' && state.current_player === 'W');
     btnPass.disabled = !isMyTurn || state.game_over;
+    if (btnResign) btnResign.disabled = (myRole === 'observer' && currentMode !== 'solo') || state.game_over;
   }
 
   function showGameOverModal(state) {
@@ -458,6 +643,12 @@
     let winnerStr = 'Draw Match!';
     if (state.winner === 'B') winnerStr = 'Black Wins!';
     if (state.winner === 'W') winnerStr = 'White Wins!';
+
+    if (state.win_reason === 'resignation') {
+      winnerStr += ' (By Resignation)';
+    } else if (state.win_reason === 'timeout') {
+      winnerStr += ' (On Time)';
+    }
 
     winnerText.textContent = winnerStr;
     
@@ -489,12 +680,45 @@
     socket.send(JSON.stringify({ action: 'pass' }));
   });
 
+  if (btnResign) {
+    btnResign.addEventListener('click', () => {
+      if (confirm('Are you sure you want to resign the match?')) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        socket.send(JSON.stringify({ action: 'resign' }));
+      }
+    });
+  }
+
+  if (chatForm) {
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (text && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'chat', text: text }));
+        chatInput.value = '';
+      }
+    });
+  }
+
+  emojiButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.getAttribute('data-emoji');
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'reaction', emoji: emoji }));
+      }
+    });
+  });
+
   function sendReset() {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
     socket.send(JSON.stringify({
       action: 'reset',
       board_size: currentBoardSize,
-      komi: currentKomi
+      komi: currentKomi,
+      handicap: currentHandicap,
+      time_control: currentTc,
+      main_time_sec: currentMainTimeMin * 60,
+      byoyomi_periods: currentByoPeriods
     }));
   }
 

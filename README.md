@@ -2,13 +2,8 @@
 
 **StoneSync** is a standalone, local-first online two-player Go (Weiqi/Baduk) web application with authoritative server-side rule validation, real-time WebSocket room multiplayer, audio sound effects, and a responsive HTML5 Canvas interface.
 
-![StoneSync Header](frontend/stonesync-header.svg)
-
----
-
-## Features
-
 - **Authoritative Go Game Engine**: Full rule validation on Python backend.
+
   - **Board Sizes**: 9x9, 13x13, 19x19.
   - **Liberties & Captures**: Group liberty tracking and immediate stone removal.
   - **Suicide Rule**: Strictly forbidden unless capturing opponent stones.
@@ -39,7 +34,6 @@ stonesync/
 │   ├── go.html             # Main web app layout
 │   ├── go.css              # Dark theme CSS design system
 │   ├── go.js               # Canvas renderer & WebSocket client
-│   ├── stonesync-header.svg# Hero graphic banner
 │   └── go-sounds/          # Audio WAV and MP3 assets
 ├── scripts/
 │   ├── gen_sounds.py       # Audio sound generator script

@@ -90,5 +90,56 @@ class TestGoGame(unittest.TestCase):
         with self.assertRaises(ValueError):
             game.place_stone(10, 10, 'B')
 
+    def test_resignation(self):
+        game = GoGame(board_size=9)
+        game.place_stone(0, 0, 'B')
+        game.resign('B')
+        self.assertTrue(game.game_over)
+        self.assertEqual(game.winner, 'W')
+        self.assertEqual(game.win_reason, 'resignation')
+
+    def test_time_controls_byoyomi(self):
+        import time
+        start_ts = time.time()
+        game = GoGame(
+            board_size=9,
+            time_control='byoyomi',
+            main_time_sec=2.0,
+            byoyomi_periods=2,
+            byoyomi_time_sec=1.0
+        )
+        game.last_move_timestamp = start_ts
+        game.place_stone(0, 0, 'B', now_ts=start_ts + 2.2)
+        self.assertEqual(game.clocks['B']['main_time'], 0.0)
+
+    def test_time_controls_fischer(self):
+        import time
+        start_ts = time.time()
+        game = GoGame(
+            board_size=9,
+            time_control='fischer',
+            main_time_sec=10.0,
+            fischer_increment_sec=3.0
+        )
+        game.last_move_timestamp = start_ts
+        game.place_stone(0, 0, 'B', now_ts=start_ts + 0.1)
+        self.assertGreaterEqual(game.clocks['B']['main_time'], 11.5)
+
+
+    def test_legal_moves(self):
+        game = GoGame(board_size=9)
+        legal_b = game.get_legal_moves('B')
+        self.assertEqual(len(legal_b), 81)
+
+    def test_stonebot(self):
+        from server.agents.bot import StoneBot
+        game = GoGame(board_size=9)
+        game.place_stone(4, 4, 'B')
+        bot = StoneBot(color='W', difficulty='tactical')
+        move = bot.select_move(game)
+        self.assertIsNotNone(move)
+        self.assertTrue(0 <= move[0] < 9 and 0 <= move[1] < 9)
+
 if __name__ == '__main__':
     unittest.main()
+
