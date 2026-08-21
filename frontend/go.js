@@ -280,12 +280,15 @@
 
   // --- Top Bar MP3 Audio Player Playlist ---
   const mp3Playlist = [
-    { title: "🎵 Zen Garden Ambient", src: "/static/go-sounds/Zen-Garden-Ambient.mp3" },
-    { title: "🌧️ Kyoto Rainfall Ambient", src: "/static/go-sounds/Kyoto-Rainfall.wav" },
-    { title: "🪨 Slate Clatter Suite", src: "/static/go-sounds/Slate-Clatter-Suite.wav" },
-    { title: "⚡ Tactical Capture Sound", src: "/static/go-sounds/GoGame-PieceRemoved.mp3" }
+    { title: "🪨 Go Game Piece Removed", src: "/static/go-sounds/GoGame-PieceRemoved.mp3" },
+    { title: "🎵 Zen Satisfying Track", src: "/static/go-sounds/Zen-Ambient-Track.wav" },
+    { title: "🔊 Stone Thwack Impact 1", src: "/static/go-sounds/GoGame-Thwack1.wav" },
+    { title: "🔊 Stone Thwack Impact 2", src: "/static/go-sounds/GoGame-Thwack2.wav" },
+    { title: "🔊 Stone Thwack Impact 3", src: "/static/go-sounds/GoGame-Thwack3.wav" },
+    { title: "🔊 Stone Thwack Impact 4", src: "/static/go-sounds/GoGame-Thwack4.wav" }
   ];
   let currentTrackIdx = 0;
+
 
   const mp3Audio = document.getElementById('mp3-audio-element');
   const btnMp3Play = document.getElementById('btn-mp3-play');
