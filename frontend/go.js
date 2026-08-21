@@ -271,13 +271,12 @@
   }
 
   let mp3Playlist = [
-    { title: "🪨 Go Game Piece Removed", src: "/static/go-sounds/GoGame-PieceRemoved.mp3" },
-    { title: "🎵 Zen Satisfying Track", src: "/static/go-sounds/Zen-Ambient-Track.wav" },
-    { title: "🔊 Stone Thwack Impact 1", src: "/static/go-sounds/GoGame-Thwack1.wav" },
-    { title: "🔊 Stone Thwack Impact 2", src: "/static/go-sounds/GoGame-Thwack2.wav" },
-    { title: "🔊 Stone Thwack Impact 3", src: "/static/go-sounds/GoGame-Thwack3.wav" },
-    { title: "🔊 Stone Thwack Impact 4", src: "/static/go-sounds/GoGame-Thwack4.wav" }
+    { title: "🎵 Binary Stream", src: "/static/music/Binary_Stream.mp3" },
+    { title: "🎵 Protocol Flow", src: "/static/music/Protocol_Flow (1).mp3" },
+    { title: "🎵 System Core", src: "/static/music/System_Core.mp3" },
+    { title: "🎵 Standard Model", src: "/static/music/Standard_Model.mp3" }
   ];
+
   let currentTrackIdx = 0;
 
   async function fetchAudioTracks() {
