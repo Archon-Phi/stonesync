@@ -64,8 +64,17 @@ class Room:
         else:
             self.bot = None
 
-    def register_player(self, player_id: str) -> str:
+    def register_player(self, player_id: str, preferred_color: Optional[str] = None) -> str:
         """Assign role ('B', 'W', or 'observer') to player_id."""
+        if preferred_color in ('B', 'W'):
+            for pid in list(self.players.keys()):
+                if pid == player_id:
+                    del self.players[pid]
+            assigned = set(self.players.values())
+            if preferred_color not in assigned:
+                self.players[player_id] = preferred_color
+                return preferred_color
+
         if player_id in self.players:
             return self.players[player_id]
 
@@ -78,6 +87,7 @@ class Room:
             return 'W'
         else:
             return 'observer'
+
 
     def get_players_info(self) -> list:
         return [
@@ -280,6 +290,23 @@ class RoomManager:
                     await room.broadcast(state)
                 except ValueError as err:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(err)}))
+
+            elif action == "switch_side":
+                requested = data.get("color")
+                if requested == "both":
+                    room.is_debug = True
+                    room.is_solo = True
+                    state = room.get_state_payload()
+                    state["your_role"] = room.game.current_player
+                    await room.broadcast(state)
+                elif requested in ("B", "W"):
+                    room.is_debug = False
+                    new_role = room.register_player(player_id, preferred_color=requested)
+                    state = room.get_state_payload()
+                    state["your_role"] = new_role
+                    await websocket.send_text(json.dumps({"type": "side_switched", "role": new_role}))
+                    await room.broadcast(state)
+
 
             elif action == "reset":
                 new_bs = data.get("board_size", room.game.board_size)

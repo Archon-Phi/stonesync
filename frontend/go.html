@@ -29,6 +29,12 @@
           <span id="nav-room-id" class="mono">stonesync-main</span>
         </div>
 
+        <div class="side-switcher" id="nav-side-switcher">
+          <button type="button" class="btn-side side-btn-b active" data-color="B" title="Switch to Black">⚫ Black</button>
+          <button type="button" class="btn-side side-btn-w" data-color="W" title="Switch to White">⚪ White</button>
+          <button type="button" class="btn-side side-btn-both" data-color="both" title="Play Both Sides (Debug Sandbox)">🛠️ Both</button>
+        </div>
+
         <div class="theme-picker">
           <select id="theme-select" title="Board Theme">
             <option value="kaya" selected>🪵 Kaya Wood</option>
@@ -36,6 +42,7 @@
             <option value="cyberpunk">⚡ Cyberpunk</option>
           </select>
         </div>
+
 
         <button type="button" id="btn-export-sgf" class="btn btn-sm btn-ghost" title="Export SGF Game Record">
           <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>

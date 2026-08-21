@@ -260,7 +260,36 @@
   }
 
 
+  document.querySelectorAll('.btn-side').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const requestedColor = btn.dataset.color;
+      document.querySelectorAll('.btn-side').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (requestedColor === 'both') {
+        currentMode = 'debug';
+        if (modeSelect) modeSelect.value = 'debug';
+      } else {
+        if (currentMode === 'debug') {
+          currentMode = 'online';
+          if (modeSelect) modeSelect.value = 'online';
+        }
+      }
+
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          action: 'switch_side',
+          color: requestedColor
+        }));
+      } else {
+        updateUrlAndControls();
+        connectWebSocket();
+      }
+    });
+  });
+
   btnCopyUrl.addEventListener('click', () => {
+
     shareUrlInput.select();
     navigator.clipboard.writeText(shareUrlInput.value).then(() => {
       showToast('Room URL copied to clipboard!', false);
@@ -568,7 +597,9 @@
   }
 
   function updateRoleBadge() {
+    let activeKey = myRole;
     if (currentMode === 'debug') {
+      activeKey = 'both';
       const activeColor = currentGameState ? (currentGameState.current_player === 'B' ? 'Black' : 'White') : 'Black';
       playerRoleBadge.textContent = `🛠️ Debug Sandbox (${activeColor})`;
       playerRoleBadge.className = 'badge role-badge role-black';
@@ -582,7 +613,12 @@
       playerRoleBadge.textContent = 'Observer (Read-Only)';
       playerRoleBadge.className = 'badge role-badge role-observer';
     }
+
+    document.querySelectorAll('.btn-side').forEach(b => {
+      b.classList.toggle('active', b.dataset.color === activeKey);
+    });
   }
+
 
 
   function updateTurnIndicator(state) {
