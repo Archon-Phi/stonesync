@@ -120,10 +120,15 @@
     return audioContext;
   }
 
-  // Synthesize spatial pitch-shifted stone impact sound based on board position
+  // Play authentic stone impact sound from uploaded WAV files based on board position
   function playSpatialPlacementSound(row, col, size) {
     if (masterVolume <= 0) return;
     try {
+      preloadAudioAssets();
+      const randomIndex = Math.floor(Math.random() * 4) + 1;
+      const soundUrl = `/static/go-sounds/GoGame-Thwack${randomIndex}.wav`;
+      if (playPreloadedSound(soundUrl, 0.85)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
 
@@ -146,19 +151,6 @@
 
       osc.start(now);
       osc.stop(now + 0.08);
-
-      const noiseOsc = ctxAudio.createOscillator();
-      const noiseGain = ctxAudio.createGain();
-      noiseOsc.type = 'triangle';
-      noiseOsc.frequency.setValueAtTime(baseFreq * 2.5, now);
-      noiseGain.gain.setValueAtTime(masterVolume * 0.3, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-      noiseOsc.connect(noiseGain);
-      noiseGain.connect(ctxAudio.destination);
-
-      noiseOsc.start(now);
-      noiseOsc.stop(now + 0.03);
     } catch (e) {
       // Audio graceful fallback
     }
@@ -167,6 +159,9 @@
   function playCaptureSound() {
     if (masterVolume <= 0) return;
     try {
+      preloadAudioAssets();
+      if (playPreloadedSound('/static/go-sounds/GoGame-PieceRemoved.mp3', 0.9)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
 
@@ -178,8 +173,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(750 + (idx * 100), now + delay);
         osc.frequency.exponentialRampToValueAtTime(300, now + delay + 0.06);
-
-        gain.gain.setValueAtTime(masterVolume * (0.8 - idx * 0.2), now + delay);
+        gain.gain.setValueAtTime(masterVolume * 0.7, now + delay);
         gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.06);
 
         osc.connect(gain);
@@ -188,9 +182,7 @@
         osc.start(now + delay);
         osc.stop(now + delay + 0.06);
       });
-    } catch (e) {
-      // Audio graceful fallback
-    }
+    } catch (e) {}
   }
 
   // --- 5. Theme & Controls Sync ---
