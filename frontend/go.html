@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoneSync - Real-Time Multiplayer Go</title>
+  <meta name="description" content="StoneSync is a standalone online multiplayer Go (Weiqi/Baduk) web application with authoritative rule enforcement, canvas board, audio feedback, and instant URL room sharing.">
+  <link rel="stylesheet" href="/static/go.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header Hero Banner -->
+    <header class="app-header">
+      <div class="header-visual">
+        <img src="/static/stonesync-header.svg" alt="StoneSync Banner" id="header-img">
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="main-content">
+      <!-- Left Column: Controls & Game Stats -->
+      <aside class="sidebar">
+        <!-- Room Setup & Share Card -->
+        <section class="card room-card">
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            Room & Match Config
+          </h2>
+          <form id="room-form" class="form-grid">
+            <div class="form-group">
+              <label for="room-input">Room ID</label>
+              <input type="text" id="room-input" placeholder="e.g. main-match" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="board-size-select">Board Size</label>
+                <select id="board-size-select">
+                  <option value="9">9 x 9</option>
+                  <option value="13">13 x 13</option>
+                  <option value="19" selected>19 x 19</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="komi-input">Komi</label>
+                <input type="number" id="komi-input" step="0.5" value="6.5">
+              </div>
+            </div>
+            <button type="submit" id="btn-join-room" class="btn btn-primary">Join / Create Room</button>
+          </form>
+
+          <div class="share-url-container">
+            <label>Shareable Room URL</label>
+            <div class="share-input-wrap">
+              <input type="text" id="share-url-input" readonly>
+              <button type="button" id="btn-copy-url" class="btn btn-secondary">Copy</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Match Status Card -->
+        <section class="card status-card">
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Match Status
+          </h2>
+          
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="status-label">Your Role</span>
+              <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+            </div>
+
+            <div class="status-item">
+              <span class="status-label">Current Turn</span>
+              <span id="turn-indicator" class="badge turn-badge turn-black">
+                <span class="stone-icon stone-black"></span>
+                Black's Turn
+              </span>
+            </div>
+
+            <div class="status-item">
+              <span class="status-label">Pass Count</span>
+              <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
+            </div>
+
+            <div class="status-item">
+              <span class="status-label">Last Move</span>
+              <span id="last-move-text" class="status-value mono">—</span>
+            </div>
+          </div>
+
+          <!-- Captures Section -->
+          <div class="captures-container">
+            <div class="capture-box capture-black">
+              <div class="capture-header">
+                <span class="stone-icon stone-black"></span>
+                <span>Black Captures</span>
+              </div>
+              <span id="black-captures" class="capture-count">0</span>
+            </div>
+
+            <div class="capture-box capture-white">
+              <div class="capture-header">
+                <span class="stone-icon stone-white"></span>
+                <span>White Captures</span>
+              </div>
+              <span id="white-captures" class="capture-count">0</span>
+            </div>
+          </div>
+
+          <!-- In-Game Action Buttons -->
+          <div class="actions-group">
+            <button id="btn-pass" class="btn btn-action btn-pass" disabled>
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              Pass Turn
+            </button>
+            <button id="btn-reset" class="btn btn-action btn-reset">
+              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              Reset Match
+            </button>
+          </div>
+        </section>
+
+        <!-- Connected Players Card -->
+        <section class="card players-card">
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Connected Players
+          </h2>
+          <div id="players-list" class="players-list">
+            <span class="muted">No players connected.</span>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Right Column: Interactive Go Board Canvas -->
+      <section class="board-column">
+        <div class="board-wrapper">
+          <div id="toast-banner" class="toast toast-hidden"></div>
+
+          <!-- Board Canvas Container -->
+          <div class="canvas-container" id="canvas-container">
+            <canvas id="go-board"></canvas>
+          </div>
+
+          <!-- Game Over Modal Overlay -->
+          <div id="game-over-overlay" class="modal-overlay modal-hidden">
+            <div class="modal-card">
+              <div class="modal-header">
+                <h3 id="game-result-title">Game Complete!</h3>
+              </div>
+              <div class="modal-body">
+                <div class="winner-announcement" id="winner-text">Black Wins!</div>
+                <div class="score-breakdown">
+                  <div class="score-card score-black">
+                    <h4>Black (First)</h4>
+                    <p class="score-total" id="black-total-score">0</p>
+                    <span class="score-detail" id="black-score-detail">Territory: 0 | Captures: 0</span>
+                  </div>
+                  <div class="score-card score-white">
+                    <h4>White (+<span id="komi-display">6.5</span>)</h4>
+                    <p class="score-total" id="white-total-score">0</p>
+                    <span class="score-detail" id="white-score-detail">Territory: 0 | Captures: 0 | Komi: 6.5</span>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button id="btn-modal-reset" class="btn btn-primary">Play Again (Reset)</button>
+                <button id="btn-modal-close" class="btn btn-secondary">Review Board</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>StoneSync Go Engine &copy; 2026 · Built with FastAPI &amp; HTML5 WebSockets</p>
+    </footer>
+  </div>
+
+  <script src="/static/go.js"></script>
+</body>
+</html>
