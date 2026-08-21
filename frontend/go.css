@@ -54,20 +54,22 @@ body {
 
 /* Header Visual */
 .app-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-main);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
   border: 1px solid var(--border-card);
 }
 
 .header-visual img {
   width: 100%;
   height: auto;
-  max-height: 160px;
+  max-height: 220px;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
+
 
 /* Main Content Grid */
 .main-content {
@@ -324,35 +326,57 @@ select:focus {
 
 .turn-badge {
   font-size: 0.85rem;
+  transition: all 0.3s ease;
 }
 
 .turn-black {
   background: #111827;
   color: #F3F4F6;
   border: 1px solid var(--accent-gold);
+  animation: pulseGoldGlow 2s infinite ease-in-out;
 }
 
 .turn-white {
   background: #F3F4F6;
   color: #111827;
   border: 1px solid var(--accent-blue);
+  animation: pulseBlueGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseGoldGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+  }
+}
+
+@keyframes pulseBlueGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+  }
 }
 
 .stone-icon {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   display: inline-block;
+  vertical-align: middle;
 }
 
 .stone-black {
-  background: radial-gradient(circle at 35% 35%, #4B5563, #000);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  background: radial-gradient(circle at 35% 35%, #6B7280, #000);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.8);
 }
 
 .stone-white {
-  background: radial-gradient(circle at 35% 35%, #FFF, #D1D5DB);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  background: radial-gradient(circle at 30% 30%, #FFFFFF, #D1D5DB);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
 }
 
 .count-badge {
@@ -363,6 +387,7 @@ select:focus {
 .mono {
   font-family: 'Space Mono', monospace;
 }
+
 
 /* Captures Display */
 .captures-container {

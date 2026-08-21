@@ -652,18 +652,23 @@
     }
 
     // F. Draw Hover Preview Stone
-    if (hoveredIntersection && myRole !== 'observer' && currentGameState.current_player === myRole && !currentGameState.game_over) {
-      const { r, c } = hoveredIntersection;
-      if (grid[r] && grid[r][c] === null) {
-        const cx = startX + c * cellSize;
-        const cy = startY + r * cellSize;
+    if (hoveredIntersection && !currentGameState.game_over) {
+      const isMyTurn = (currentMode === 'solo') || (myRole !== 'observer' && currentGameState.current_player === myRole);
+      if (isMyTurn) {
+        const { r, c } = hoveredIntersection;
+        if (grid[r] && grid[r][c] === null) {
+          const cx = startX + c * cellSize;
+          const cy = startY + r * cellSize;
+          const previewColor = (currentMode === 'solo') ? currentGameState.current_player : myRole;
 
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        drawStone(cx, cy, stoneRadius, myRole, currentTheme);
-        ctx.restore();
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          drawStone(cx, cy, stoneRadius, previewColor, currentTheme);
+          ctx.restore();
+        }
       }
     }
+
   }
 
   // Render visual territorial influence clouds
