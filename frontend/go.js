@@ -401,6 +401,55 @@
     });
   });
 
+  const adminPauseBtn = document.getElementById('btn-admin-pause');
+  const adminResetBtn = document.getElementById('btn-admin-reset');
+  const adminKickSelect = document.getElementById('admin-kick-select');
+  const adminKickBtn = document.getElementById('btn-admin-kick');
+  const adminAwardBlackBtn = document.getElementById('btn-award-black');
+  const adminAwardWhiteBtn = document.getElementById('btn-award-white');
+
+  if (adminPauseBtn) {
+    adminPauseBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'pause_clock' }));
+      }
+    });
+  }
+
+  if (adminResetBtn) {
+    adminResetBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'reset' }));
+      }
+    });
+  }
+
+  if (adminKickBtn) {
+    adminKickBtn.addEventListener('click', () => {
+      const targetPid = adminKickSelect ? adminKickSelect.value : '';
+      if (targetPid && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'kick_player', target_player_id: targetPid }));
+      }
+    });
+  }
+
+  if (adminAwardBlackBtn) {
+    adminAwardBlackBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'declare_winner', winner: 'B' }));
+      }
+    });
+  }
+
+  if (adminAwardWhiteBtn) {
+    adminAwardWhiteBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'declare_winner', winner: 'W' }));
+      }
+    });
+  }
+
+
   if (handicapSelect) {
     handicapSelect.addEventListener('change', () => {
       const val = parseInt(handicapSelect.value, 10);
@@ -632,6 +681,7 @@
     updatePlayersList(data.players);
     updateButtons(gameState);
     updateClockUI();
+    updateAdminPanel(data);
 
     if (gameState.game_over) {
       showGameOverModal(gameState);
@@ -641,6 +691,35 @@
 
     renderBoard();
   }
+
+  function updateAdminPanel(data) {
+    const adminPanelCard = document.getElementById('admin-panel-card');
+    const adminPauseBtn = document.getElementById('btn-admin-pause');
+    const adminKickSelect = document.getElementById('admin-kick-select');
+    if (!adminPanelCard) return;
+
+    const isHost = (data.host_id === playerId) || (currentMode === 'debug') || (myRole !== 'observer');
+    adminPanelCard.style.display = isHost ? 'block' : 'none';
+
+    if (adminPauseBtn && data.is_paused !== undefined) {
+      adminPauseBtn.textContent = data.is_paused ? '▶️ Resume Clock' : '⏸️ Pause Clock';
+    }
+
+    if (adminKickSelect && data.players) {
+      const currentVal = adminKickSelect.value;
+      adminKickSelect.innerHTML = '<option value="">Select occupant...</option>';
+      data.players.forEach(p => {
+        if (p.player_id !== playerId) {
+          const opt = document.createElement('option');
+          opt.value = p.player_id;
+          opt.textContent = `${p.short_id} (${p.color})`;
+          adminKickSelect.appendChild(opt);
+        }
+      });
+      if (currentVal) adminKickSelect.value = currentVal;
+    }
+  }
+
 
   function renderChatHistory(history) {
     if (!chatMessages) return;

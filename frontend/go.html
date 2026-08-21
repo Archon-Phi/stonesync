@@ -257,8 +257,47 @@
           </details>
         </section>
 
+        <!-- Room Admin Panel -->
+        <section class="card admin-card" id="admin-panel-card" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title" style="color: #F59E0B;">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+              Room Admin Panel
+            </h2>
+            <span class="badge role-observer" id="admin-status-badge">Host Controls</span>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button type="button" id="btn-admin-pause" class="btn btn-secondary btn-sm" style="flex: 1;">
+              ⏸️ Pause Clock
+            </button>
+            <button type="button" id="btn-admin-reset" class="btn btn-secondary btn-sm" style="flex: 1;">
+              🔄 Reset Board
+            </button>
+          </div>
+
+          <div class="form-group" style="margin-top: 10px;">
+            <label for="admin-kick-select" style="font-size: 0.75rem;">Kick Player / Observer</label>
+            <div style="display: flex; gap: 6px;">
+              <select id="admin-kick-select" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+                <option value="">Select occupant...</option>
+              </select>
+              <button type="button" id="btn-admin-kick" class="btn btn-danger btn-sm">Kick</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 10px;">
+            <label style="font-size: 0.75rem;">Adjudicate Winner</label>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" id="btn-award-black" class="btn btn-secondary btn-sm" style="flex: 1;">👑 Black Wins</button>
+              <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">👑 White Wins</button>
+            </div>
+          </div>
+        </section>
+
         <!-- Room Chat & Reactions Panel -->
         <section class="card chat-card">
+
           <h2 class="card-title">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             Room Chat
