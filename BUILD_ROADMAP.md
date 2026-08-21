@@ -84,3 +84,31 @@ graph TD
   - Capped message history broadcast (50 items max).
   - Floating emoji CSS animation layer over board canvas.
   - Procedural Web Audio API sound synthesis (placement pitch modulation, spatial panning, capture click).
+
+---
+
+### 📍 Task 8: Real-Time Room Chat & History Persistence (`server/go_server.py` & `frontend/go.js`)
+- **Objective**: Build out real-time room chat broadcasting over WebSockets with role badging and scroll lock.
+- **Key Deliverables**:
+  - WebSocket `chat` message broadcasting.
+  - Role-colored badges (`Black`, `White`, `Observer`) in chat history.
+  - Capped 50-message rolling history per room.
+
+---
+
+### 📍 Task 9: Room & Game Settings Configuration UI (`frontend/go.html` & `frontend/go.js`)
+- **Objective**: Build dynamic match settings panel for configuring Board Size, Komi, Handicap, and Time Controls.
+- **Key Deliverables**:
+  - Accordion config card with live form fields.
+  - Deep-link URL generator and instant room URL clipboard copy button.
+  - Dynamic field visibility based on selected Time Control.
+
+---
+
+### 📍 Task 10: Room Admin & Moderation Controls (`server/go_server.py` & `frontend/go.html`)
+- **Objective**: Provide room host moderation tools for managing active matches.
+- **Key Deliverables**:
+  - Player kick / disconnect handler.
+  - Manual game state reset & clock pause/resume triggers.
+  - Room privacy / password enforcement options.
+

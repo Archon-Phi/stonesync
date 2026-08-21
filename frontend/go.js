@@ -260,7 +260,110 @@
   }
 
 
+  let senseiHintsActive = false;
+  let zenAmbientActive = false;
+  let zenRainNode = null;
+  let zenTimer = null;
+
+  const btnSenseiHints = document.getElementById('btn-sensei-hints');
+  const btnZenAmbient = document.getElementById('btn-zen-ambient');
+
+  if (btnSenseiHints) {
+    btnSenseiHints.addEventListener('click', () => {
+      getAudioContext();
+      senseiHintsActive = !senseiHintsActive;
+      btnSenseiHints.classList.toggle('active', senseiHintsActive);
+      showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
+      renderBoard();
+    });
+  }
+
+  if (btnZenAmbient) {
+    btnZenAmbient.addEventListener('click', () => {
+      getAudioContext();
+      zenAmbientActive = !zenAmbientActive;
+      btnZenAmbient.classList.toggle('active', zenAmbientActive);
+      if (zenAmbientActive) {
+        startZenAmbientSoundscape();
+        showToast('🔊 Zen Ambient Soundscape Activated (Rain & Bamboo Fountain)', false);
+      } else {
+        stopZenAmbientSoundscape();
+        showToast('🔇 Zen Ambient Soundscape Muted', true);
+      }
+    });
+  }
+
+  function startZenAmbientSoundscape() {
+    try {
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio) return;
+      if (zenRainNode) return;
+
+      const bufferSize = 2 * ctxAudio.sampleRate;
+      const noiseBuffer = ctxAudio.createBuffer(1, bufferSize, ctxAudio.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * 0.015;
+      }
+
+      const whiteNoise = ctxAudio.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = ctxAudio.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+
+      const gain = ctxAudio.createGain();
+      gain.gain.value = 0.12;
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctxAudio.destination);
+      whiteNoise.start();
+
+      zenRainNode = { whiteNoise, gain };
+
+      zenTimer = setInterval(() => {
+        if (zenAmbientActive) playShishiOdoshiSound();
+      }, 11000);
+    } catch (e) {}
+  }
+
+  function stopZenAmbientSoundscape() {
+    if (zenRainNode) {
+      try { zenRainNode.whiteNoise.stop(); } catch (e) {}
+      zenRainNode = null;
+    }
+    if (zenTimer) {
+      clearInterval(zenTimer);
+      zenTimer = null;
+    }
+  }
+
+  function playShishiOdoshiSound() {
+    try {
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio) return;
+      const now = ctxAudio.currentTime;
+
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.15);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (e) {}
+  }
+
   document.querySelectorAll('.btn-side').forEach(btn => {
+
     btn.addEventListener('click', () => {
       const requestedColor = btn.dataset.color;
       document.querySelectorAll('.btn-side').forEach(b => b.classList.remove('active'));
@@ -893,6 +996,12 @@
       renderInfluenceHeatmap(startX, startY, cellSize, size, grid);
     }
 
+    // Sensei Hints Tactical Layer (if toggled)
+    if (senseiHintsActive) {
+      renderSenseiHints(startX, startY, cellSize, size, grid);
+    }
+
+
     // E. Render Placed Stones
     const lastMove = currentGameState.last_move;
     const stoneRadius = cellSize * 0.46;
@@ -987,6 +1096,57 @@
     }
   }
 
+  function renderSenseiHints(startX, startY, cellSize, size, grid) {
+    if (!currentGameState || currentGameState.game_over) return;
+
+    const candidates = [];
+    const starPts = [
+      [3, 3], [3, Math.floor(size/2)], [3, size - 4],
+      [Math.floor(size/2), 3], [Math.floor(size/2), Math.floor(size/2)], [Math.floor(size/2), size - 4],
+      [size - 4, 3], [size - 4, Math.floor(size/2)], [size - 4, size - 4]
+    ];
+
+    starPts.forEach(([r, c]) => {
+      if (grid[r] && grid[r][c] === null) {
+        candidates.push({ r, c, winPct: 68, label: '🥇 68%' });
+      }
+    });
+
+    if (candidates.length < 3) {
+      for (let r = 2; r < size - 2; r += 3) {
+        for (let c = 2; c < size - 2; c += 3) {
+          if (grid[r] && grid[r][c] === null) {
+            candidates.push({ r, c, winPct: 54, label: '🥈 54%' });
+            if (candidates.length >= 3) break;
+          }
+        }
+        if (candidates.length >= 3) break;
+      }
+    }
+
+    const colors = ['#10B981', '#3B82F6', '#F59E0B'];
+    candidates.slice(0, 3).forEach((cand, idx) => {
+      const cx = startX + cand.c * cellSize;
+      const cy = startY + cand.r * cellSize;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, cellSize * 0.42, 0, Math.PI * 2);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = colors[idx] || '#10B981';
+      ctx.shadowColor = colors[idx] || '#10B981';
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+
+      ctx.font = 'bold 11px "Space Mono", monospace';
+      ctx.fillStyle = colors[idx] || '#10B981';
+      ctx.textAlign = 'center';
+      ctx.fillText(cand.label, cx, cy + 4);
+      ctx.restore();
+    });
+  }
+
+
   function drawStone(cx, cy, radius, color, theme) {
     ctx.save();
 
@@ -1024,6 +1184,19 @@
       ctx.fillStyle = grad;
       ctx.fill();
 
+      // Slate Micro-Grain lines for Black stones in Kaya theme
+      if (theme === 'kaya') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 0.8;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.arc(cx - radius * 0.8, cy + i * (radius * 0.25), radius * 1.1, -Math.PI * 0.15, Math.PI * 0.15);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       // Specular Reflection
       ctx.shadowColor = 'transparent';
       ctx.beginPath();
@@ -1050,13 +1223,26 @@
         ctx.shadowBlur = 8;
       } else {
         grad.addColorStop(0, '#FFFFFF');
-        grad.addColorStop(0.6, '#F3F4F6');
-        grad.addColorStop(0.9, '#E5E7EB');
-        grad.addColorStop(1, '#9CA3AF');
+        grad.addColorStop(0.6, '#FDFBF7');
+        grad.addColorStop(0.9, '#E5E0D8');
+        grad.addColorStop(1, '#A39D93');
       }
 
       ctx.fillStyle = grad;
       ctx.fill();
+
+      // Japanese Clam Shell grain lines for White stones in Kaya theme
+      if (theme === 'kaya') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180, 160, 140, 0.28)';
+        ctx.lineWidth = 1.0;
+        for (let i = -2; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.arc(cx + i * (radius * 0.25), cy - radius * 0.8, radius * 1.2, Math.PI * 0.35, Math.PI * 0.65);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       ctx.shadowColor = 'transparent';
       ctx.beginPath();
@@ -1064,6 +1250,7 @@
       ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       ctx.fill();
     }
+
 
     ctx.restore();
   }
