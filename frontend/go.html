@@ -44,7 +44,20 @@
         </div>
 
 
+        <!-- Top Bar MP3 Audio Player -->
+        <div class="mp3-player-widget" id="mp3-player-widget">
+          <button type="button" id="btn-mp3-prev" class="btn-mp3-ctrl" title="Previous Track">⏮️</button>
+          <button type="button" id="btn-mp3-play" class="btn-mp3-ctrl btn-mp3-play" title="Play / Pause">▶️</button>
+          <button type="button" id="btn-mp3-next" class="btn-mp3-ctrl" title="Next Track">⏭️</button>
+          <div class="mp3-track-info">
+            <span id="mp3-track-title" class="mp3-title">🎵 Zen Garden Ambient</span>
+            <span id="mp3-track-time" class="mp3-time mono">0:00 / 0:00</span>
+          </div>
+          <audio id="mp3-audio-element" preload="metadata"></audio>
+        </div>
+
         <button type="button" id="btn-sensei-hints" class="btn btn-sm btn-accent" title="AI Sensei Move Evaluator">
+
           💡 Sensei Hints
         </button>
 

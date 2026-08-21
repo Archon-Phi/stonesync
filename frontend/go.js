@@ -278,7 +278,81 @@
     });
   }
 
+  // --- Top Bar MP3 Audio Player Playlist ---
+  const mp3Playlist = [
+    { title: "🎵 Zen Garden Ambient", src: "/static/go-sounds/Zen-Garden-Ambient.mp3" },
+    { title: "🌧️ Kyoto Rainfall Ambient", src: "/static/go-sounds/Kyoto-Rainfall.wav" },
+    { title: "🪨 Slate Clatter Suite", src: "/static/go-sounds/Slate-Clatter-Suite.wav" },
+    { title: "⚡ Tactical Capture Sound", src: "/static/go-sounds/GoGame-PieceRemoved.mp3" }
+  ];
+  let currentTrackIdx = 0;
+
+  const mp3Audio = document.getElementById('mp3-audio-element');
+  const btnMp3Play = document.getElementById('btn-mp3-play');
+  const btnMp3Prev = document.getElementById('btn-mp3-prev');
+  const btnMp3Next = document.getElementById('btn-mp3-next');
+  const mp3Title = document.getElementById('mp3-track-title');
+  const mp3Time = document.getElementById('mp3-track-time');
+
+  function loadTrack(idx) {
+    if (!mp3Audio || !mp3Playlist[idx]) return;
+    currentTrackIdx = idx;
+    const track = mp3Playlist[currentTrackIdx];
+    mp3Audio.src = track.src;
+    if (mp3Title) mp3Title.textContent = track.title;
+  }
+
+  function togglePlayPause() {
+    if (!mp3Audio) return;
+    if (mp3Audio.paused) {
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title}`, false);
+      }).catch(e => {
+        showToast('Click play to allow audio playback', true);
+      });
+    } else {
+      mp3Audio.pause();
+      if (btnMp3Play) btnMp3Play.textContent = '▶️';
+    }
+  }
+
+  if (mp3Audio) {
+    mp3Audio.addEventListener('timeupdate', () => {
+      if (!mp3Time || !mp3Audio.duration) return;
+      const cur = formatSeconds(mp3Audio.currentTime);
+      const dur = formatSeconds(mp3Audio.duration);
+      mp3Time.textContent = `${cur} / ${dur}`;
+    });
+
+    mp3Audio.addEventListener('ended', () => {
+      loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
+      mp3Audio.play();
+    });
+  }
+
+  if (btnMp3Play) btnMp3Play.addEventListener('click', togglePlayPause);
+  if (btnMp3Next) {
+    btnMp3Next.addEventListener('click', () => {
+      loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+      });
+    });
+  }
+  if (btnMp3Prev) {
+    btnMp3Prev.addEventListener('click', () => {
+      loadTrack((currentTrackIdx - 1 + mp3Playlist.length) % mp3Playlist.length);
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+      });
+    });
+  }
+
+  loadTrack(0);
+
   if (btnZenAmbient) {
+
     btnZenAmbient.addEventListener('click', () => {
       getAudioContext();
       preloadAudioAssets();
