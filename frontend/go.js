@@ -281,7 +281,9 @@
   if (btnZenAmbient) {
     btnZenAmbient.addEventListener('click', () => {
       getAudioContext();
+      preloadAudioAssets();
       zenAmbientActive = !zenAmbientActive;
+
       btnZenAmbient.classList.toggle('active', zenAmbientActive);
       if (zenAmbientActive) {
         startZenAmbientSoundscape();
@@ -341,8 +343,55 @@
     }
   }
 
+  const soundBuffers = {};
+  const soundAssetUrls = [
+    '/static/go-sounds/GoGame-Thwack1.wav',
+    '/static/go-sounds/GoGame-Thwack2.wav',
+    '/static/go-sounds/GoGame-Thwack3.wav',
+    '/static/go-sounds/GoGame-Thwack4.wav',
+    '/static/go-sounds/GoGame-PieceRemoved.mp3'
+  ];
+
+  async function preloadAudioAssets() {
+    const ctxAudio = getAudioContext();
+    if (!ctxAudio) return;
+    for (const url of soundAssetUrls) {
+      if (soundBuffers[url]) continue;
+      try {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer();
+          const decoded = await ctxAudio.decodeAudioData(arrayBuf);
+          soundBuffers[url] = decoded;
+        }
+      } catch (e) {}
+    }
+  }
+
+  function playPreloadedSound(url, volume = 0.5) {
+    try {
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio || !soundBuffers[url]) return false;
+      const src = ctxAudio.createBufferSource();
+      src.buffer = soundBuffers[url];
+      const gain = ctxAudio.createGain();
+      gain.gain.value = masterVolume * volume;
+      src.connect(gain);
+      gain.connect(ctxAudio.destination);
+      src.start();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function playShishiOdoshiSound() {
     try {
+      preloadAudioAssets();
+      const randomIndex = Math.floor(Math.random() * 4) + 1;
+      const soundUrl = `/static/go-sounds/GoGame-Thwack${randomIndex}.wav`;
+      if (playPreloadedSound(soundUrl, 0.3)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
       const now = ctxAudio.currentTime;
@@ -361,6 +410,7 @@
       osc.stop(now + 0.15);
     } catch (e) {}
   }
+
 
   document.querySelectorAll('.btn-side').forEach(btn => {
 
