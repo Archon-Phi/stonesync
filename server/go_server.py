@@ -65,14 +65,27 @@ class Room:
             self.bot = None
 
     def register_player(self, player_id: str, preferred_color: Optional[str] = None) -> str:
-        """Assign role ('B', 'W', or 'observer') to player_id."""
+        """Assign role ('B', 'W', or 'observer') to player_id, swapping roles if necessary."""
         if preferred_color in ('B', 'W'):
-            for pid in list(self.players.keys()):
-                if pid == player_id:
-                    del self.players[pid]
-            assigned = set(self.players.values())
-            if preferred_color not in assigned:
+            other_occupant = None
+            for pid, color in list(self.players.items()):
+                if pid != player_id and color == preferred_color:
+                    other_occupant = pid
+                    break
+
+            old_color = self.players.get(player_id)
+
+            if other_occupant and old_color in ('B', 'W'):
                 self.players[player_id] = preferred_color
+                self.players[other_occupant] = old_color
+                return preferred_color
+            elif not other_occupant:
+                self.players[player_id] = preferred_color
+                return preferred_color
+            else:
+                opposite = 'W' if preferred_color == 'B' else 'B'
+                self.players[player_id] = preferred_color
+                self.players[other_occupant] = opposite
                 return preferred_color
 
         if player_id in self.players:
@@ -87,6 +100,7 @@ class Room:
             return 'W'
         else:
             return 'observer'
+
 
 
     def get_players_info(self) -> list:
@@ -296,16 +310,19 @@ class RoomManager:
                 if requested == "both":
                     room.is_debug = True
                     room.is_solo = True
-                    state = room.get_state_payload()
-                    state["your_role"] = room.game.current_player
-                    await room.broadcast(state)
+                    for client_ws, pid in list(room.clients.items()):
+                        st = room.get_state_payload()
+                        st["your_role"] = room.game.current_player
+                        await client_ws.send_text(json.dumps(st))
                 elif requested in ("B", "W"):
                     room.is_debug = False
                     new_role = room.register_player(player_id, preferred_color=requested)
-                    state = room.get_state_payload()
-                    state["your_role"] = new_role
-                    await websocket.send_text(json.dumps({"type": "side_switched", "role": new_role}))
-                    await room.broadcast(state)
+                    for client_ws, pid in list(room.clients.items()):
+                        client_role = room.players.get(pid, 'observer')
+                        st = room.get_state_payload()
+                        st["your_role"] = client_role
+                        await client_ws.send_text(json.dumps(st))
+
 
 
             elif action == "reset":
