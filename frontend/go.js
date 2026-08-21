@@ -31,6 +31,7 @@
   // --- 2. Parse & Sync URL Parameters ---
   const urlParams = new URLSearchParams(window.location.search);
   let currentRoomId = urlParams.get('room') || 'stonesync-main';
+  let currentMode = urlParams.get('mode') || 'online';
   let currentBoardSize = parseInt(urlParams.get('board_size') || '19', 10);
   let currentHandicap = parseInt(urlParams.get('handicap') || '0', 10);
   let currentKomi = urlParams.has('komi') ? parseFloat(urlParams.get('komi')) : (currentHandicap >= 2 ? 0.5 : 6.5);
@@ -41,6 +42,7 @@
 
   // --- 3. DOM Elements ---
   const roomInput = document.getElementById('room-input');
+  const modeSelect = document.getElementById('mode-select');
   const boardSizeSelect = document.getElementById('board-size-select');
   const handicapSelect = document.getElementById('handicap-select');
   const komiInput = document.getElementById('komi-input');
@@ -49,6 +51,7 @@
   const shareUrlInput = document.getElementById('share-url-input');
   const btnCopyUrl = document.getElementById('btn-copy-url');
   const roomForm = document.getElementById('room-form');
+
 
 
   const playerRoleBadge = document.getElementById('player-role-badge');
@@ -203,11 +206,12 @@
 
   function updateUrlAndControls() {
     roomInput.value = currentRoomId;
+    if (modeSelect) modeSelect.value = currentMode;
     boardSizeSelect.value = currentBoardSize.toString();
     if (handicapSelect) handicapSelect.value = currentHandicap.toString();
     komiInput.value = currentKomi.toString();
 
-    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
     shareUrlInput.value = fullUrl;
     window.history.replaceState({}, '', fullUrl);
   }
@@ -233,6 +237,7 @@
   roomForm.addEventListener('submit', (e) => {
     e.preventDefault();
     currentRoomId = roomInput.value.trim() || 'stonesync-main';
+    currentMode = modeSelect ? modeSelect.value : 'online';
     currentBoardSize = parseInt(boardSizeSelect.value, 10);
     currentHandicap = handicapSelect ? parseInt(handicapSelect.value, 10) : 0;
     currentKomi = parseFloat(komiInput.value);
@@ -260,7 +265,8 @@
     }
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+
 
 
     socket = new WebSocket(wsUrl);
@@ -483,21 +489,29 @@
   }
 
   function resizeCanvas() {
+    if (!canvasContainer || !canvas) return;
     const rect = canvasContainer.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    renderBoard();
+    const targetW = Math.floor(rect.width * dpr);
+    const targetH = Math.floor(rect.height * dpr);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('resize', () => {
+    renderBoard();
+  });
 
   function renderBoard() {
     if (!canvasContainer || !canvas) return;
+    resizeCanvas();
     const width = canvasContainer.clientWidth;
     const height = canvasContainer.clientHeight;
     ctx.clearRect(0, 0, width, height);
+
 
     const size = currentGameState ? currentGameState.board_size : currentBoardSize;
     const padding = 36;
@@ -791,14 +805,15 @@
     getAudioContext();
 
     if (!currentGameState || currentGameState.game_over) return;
-    if (myRole === 'observer') {
+    if (currentMode !== 'solo' && myRole === 'observer') {
       showToast('Observers cannot place stones', true);
       return;
     }
-    if (currentGameState.current_player !== myRole) {
+    if (currentMode !== 'solo' && currentGameState.current_player !== myRole) {
       showToast(`Not your turn! Waiting for ${currentGameState.current_player === 'B' ? 'Black' : 'White'}`, true);
       return;
     }
+
 
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
