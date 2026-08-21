@@ -120,10 +120,15 @@
     return audioContext;
   }
 
-  // Synthesize spatial pitch-shifted stone impact sound based on board position
+  // Play authentic stone impact sound from uploaded WAV files based on board position
   function playSpatialPlacementSound(row, col, size) {
     if (masterVolume <= 0) return;
     try {
+      preloadAudioAssets();
+      const randomIndex = Math.floor(Math.random() * 4) + 1;
+      const soundUrl = `/static/go-sounds/GoGame-Thwack${randomIndex}.wav`;
+      if (playPreloadedSound(soundUrl, 0.85)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
 
@@ -146,19 +151,6 @@
 
       osc.start(now);
       osc.stop(now + 0.08);
-
-      const noiseOsc = ctxAudio.createOscillator();
-      const noiseGain = ctxAudio.createGain();
-      noiseOsc.type = 'triangle';
-      noiseOsc.frequency.setValueAtTime(baseFreq * 2.5, now);
-      noiseGain.gain.setValueAtTime(masterVolume * 0.3, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-      noiseOsc.connect(noiseGain);
-      noiseGain.connect(ctxAudio.destination);
-
-      noiseOsc.start(now);
-      noiseOsc.stop(now + 0.03);
     } catch (e) {
       // Audio graceful fallback
     }
@@ -167,6 +159,9 @@
   function playCaptureSound() {
     if (masterVolume <= 0) return;
     try {
+      preloadAudioAssets();
+      if (playPreloadedSound('/static/go-sounds/GoGame-PieceRemoved.mp3', 0.9)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
 
@@ -178,8 +173,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(750 + (idx * 100), now + delay);
         osc.frequency.exponentialRampToValueAtTime(300, now + delay + 0.06);
-
-        gain.gain.setValueAtTime(masterVolume * (0.8 - idx * 0.2), now + delay);
+        gain.gain.setValueAtTime(masterVolume * 0.7, now + delay);
         gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.06);
 
         osc.connect(gain);
@@ -188,9 +182,7 @@
         osc.start(now + delay);
         osc.stop(now + delay + 0.06);
       });
-    } catch (e) {
-      // Audio graceful fallback
-    }
+    } catch (e) {}
   }
 
   // --- 5. Theme & Controls Sync ---
@@ -278,10 +270,104 @@
     });
   }
 
+  let mp3Playlist = [
+    { title: "🎵 Binary Stream", src: "/static/music/Binary_Stream.mp3" },
+    { title: "🎵 Protocol Flow", src: "/static/music/Protocol_Flow (1).mp3" },
+    { title: "🎵 System Core", src: "/static/music/System_Core.mp3" },
+    { title: "🎵 Standard Model", src: "/static/music/Standard_Model.mp3" }
+  ];
+
+  let currentTrackIdx = 0;
+
+  async function fetchAudioTracks() {
+    try {
+      const resp = await fetch('/api/audio-tracks');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.tracks && data.tracks.length > 0) {
+          mp3Playlist = data.tracks;
+          soundAssetUrls.length = 0;
+          data.tracks.forEach(t => soundAssetUrls.push(t.src));
+          loadTrack(0);
+        }
+      }
+    } catch (e) {}
+  }
+
+  const mp3Audio = document.getElementById('mp3-audio-element');
+  const btnMp3Play = document.getElementById('btn-mp3-play');
+  const btnMp3Prev = document.getElementById('btn-mp3-prev');
+  const btnMp3Next = document.getElementById('btn-mp3-next');
+  const mp3Title = document.getElementById('mp3-track-title');
+  const mp3Time = document.getElementById('mp3-track-time');
+
+  function loadTrack(idx) {
+    if (!mp3Audio || !mp3Playlist || !mp3Playlist[idx]) return;
+    currentTrackIdx = idx;
+    const track = mp3Playlist[currentTrackIdx];
+    mp3Audio.src = track.src;
+    if (mp3Title) mp3Title.textContent = track.title;
+  }
+
+
+  function togglePlayPause() {
+    if (!mp3Audio) return;
+    if (mp3Audio.paused) {
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title}`, false);
+      }).catch(e => {
+        showToast('Click play to allow audio playback', true);
+      });
+    } else {
+      mp3Audio.pause();
+      if (btnMp3Play) btnMp3Play.textContent = '▶️';
+    }
+  }
+
+  if (mp3Audio) {
+    mp3Audio.addEventListener('timeupdate', () => {
+      if (!mp3Time || !mp3Audio.duration) return;
+      const cur = formatSeconds(mp3Audio.currentTime);
+      const dur = formatSeconds(mp3Audio.duration);
+      mp3Time.textContent = `${cur} / ${dur}`;
+    });
+
+    mp3Audio.addEventListener('ended', () => {
+      loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
+      mp3Audio.play();
+    });
+  }
+
+  if (btnMp3Play) btnMp3Play.addEventListener('click', togglePlayPause);
+  if (btnMp3Next) {
+    btnMp3Next.addEventListener('click', () => {
+      loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+      });
+    });
+  }
+  if (btnMp3Prev) {
+    btnMp3Prev.addEventListener('click', () => {
+      loadTrack((currentTrackIdx - 1 + mp3Playlist.length) % mp3Playlist.length);
+      mp3Audio.play().then(() => {
+        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+      });
+    });
+  }
+
+  loadTrack(0);
+  fetchAudioTracks();
+
+
   if (btnZenAmbient) {
+
     btnZenAmbient.addEventListener('click', () => {
       getAudioContext();
+      preloadAudioAssets();
       zenAmbientActive = !zenAmbientActive;
+
       btnZenAmbient.classList.toggle('active', zenAmbientActive);
       if (zenAmbientActive) {
         startZenAmbientSoundscape();
@@ -341,8 +427,55 @@
     }
   }
 
+  const soundBuffers = {};
+  const soundAssetUrls = [
+    '/static/go-sounds/GoGame-Thwack1.wav',
+    '/static/go-sounds/GoGame-Thwack2.wav',
+    '/static/go-sounds/GoGame-Thwack3.wav',
+    '/static/go-sounds/GoGame-Thwack4.wav',
+    '/static/go-sounds/GoGame-PieceRemoved.mp3'
+  ];
+
+  async function preloadAudioAssets() {
+    const ctxAudio = getAudioContext();
+    if (!ctxAudio) return;
+    for (const url of soundAssetUrls) {
+      if (soundBuffers[url]) continue;
+      try {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer();
+          const decoded = await ctxAudio.decodeAudioData(arrayBuf);
+          soundBuffers[url] = decoded;
+        }
+      } catch (e) {}
+    }
+  }
+
+  function playPreloadedSound(url, volume = 0.5) {
+    try {
+      const ctxAudio = getAudioContext();
+      if (!ctxAudio || !soundBuffers[url]) return false;
+      const src = ctxAudio.createBufferSource();
+      src.buffer = soundBuffers[url];
+      const gain = ctxAudio.createGain();
+      gain.gain.value = masterVolume * volume;
+      src.connect(gain);
+      gain.connect(ctxAudio.destination);
+      src.start();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function playShishiOdoshiSound() {
     try {
+      preloadAudioAssets();
+      const randomIndex = Math.floor(Math.random() * 4) + 1;
+      const soundUrl = `/static/go-sounds/GoGame-Thwack${randomIndex}.wav`;
+      if (playPreloadedSound(soundUrl, 0.3)) return;
+
       const ctxAudio = getAudioContext();
       if (!ctxAudio) return;
       const now = ctxAudio.currentTime;
@@ -361,6 +494,7 @@
       osc.stop(now + 0.15);
     } catch (e) {}
   }
+
 
   document.querySelectorAll('.btn-side').forEach(btn => {
 
@@ -400,6 +534,90 @@
       showToast('Failed to copy URL', true);
     });
   });
+
+  const adminPauseBtn = document.getElementById('btn-admin-pause');
+  const adminResetBtn = document.getElementById('btn-admin-reset');
+  const adminKickSelect = document.getElementById('admin-kick-select');
+  const adminKickBtn = document.getElementById('btn-admin-kick');
+  const adminAwardBlackBtn = document.getElementById('btn-award-black');
+  const adminAwardWhiteBtn = document.getElementById('btn-award-white');
+
+  if (adminPauseBtn) {
+    adminPauseBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'pause_clock' }));
+      }
+    });
+  }
+
+  if (adminResetBtn) {
+    adminResetBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'reset' }));
+      }
+    });
+  }
+
+  if (adminKickBtn) {
+    adminKickBtn.addEventListener('click', () => {
+      const targetPid = adminKickSelect ? adminKickSelect.value : '';
+      if (targetPid && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'kick_player', target_player_id: targetPid }));
+      }
+    });
+  }
+
+  if (adminAwardBlackBtn) {
+    adminAwardBlackBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'declare_winner', winner: 'B' }));
+      }
+    });
+  }
+
+  if (adminAwardWhiteBtn) {
+    adminAwardWhiteBtn.addEventListener('click', () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ action: 'declare_winner', winner: 'W' }));
+      }
+    });
+  }
+
+  const btnTogglePrivacy = document.getElementById('btn-toggle-privacy');
+  const adminPassInput = document.getElementById('admin-pass-input');
+  const btnManualScore = document.getElementById('btn-manual-score');
+  const adminScoreB = document.getElementById('admin-score-b');
+  const adminScoreW = document.getElementById('admin-score-w');
+
+  if (btnTogglePrivacy) {
+    btnTogglePrivacy.addEventListener('click', () => {
+      const pwd = adminPassInput ? adminPassInput.value : '';
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          action: 'set_room_privacy',
+          password: pwd,
+          is_private: Boolean(pwd)
+        }));
+        showToast(pwd ? '🔒 Room Password Set & Locked' : '🔓 Room Unlocked', false);
+      }
+    });
+  }
+
+  if (btnManualScore) {
+    btnManualScore.addEventListener('click', () => {
+      const bPts = adminScoreB ? adminScoreB.value : '0';
+      const wPts = adminScoreW ? adminScoreW.value : '0';
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          action: 'manual_score_override',
+          b_score: parseFloat(bPts) || 0,
+          w_score: parseFloat(wPts) || 0
+        }));
+      }
+    });
+  }
+
+
 
   if (handicapSelect) {
     handicapSelect.addEventListener('change', () => {
@@ -516,6 +734,17 @@
       }
     };
 
+    const isGitHubPages = window.location.hostname.endsWith('github.io');
+    if (isGitHubPages) {
+      if (playerRoleBadge) {
+        playerRoleBadge.textContent = 'GitHub Pages Mode (Offline Sandbox)';
+        playerRoleBadge.className = 'badge role-badge role-both';
+      }
+      showToast('⚡ Running on GitHub Pages — Offline Sandbox & AI Sensei Mode Active!', false);
+      currentMode = 'debug';
+      return;
+    }
+
     socket.onclose = () => {
       if (playerRoleBadge) {
         playerRoleBadge.textContent = 'Disconnected (Reconnecting...)';
@@ -525,13 +754,14 @@
         if (!socket || socket.readyState === WebSocket.CLOSED) {
           connectWebSocket();
         }
-      }, 3500);
+      }, 5000);
     };
 
     socket.onerror = (err) => {
-      console.warn('WebSocket Error:', err);
+      console.warn('WebSocket Connection Issue:', err);
     };
   }
+
 
   // --- 8. Clocks & Timers ---
   let clockInterval = null;
@@ -632,6 +862,7 @@
     updatePlayersList(data.players);
     updateButtons(gameState);
     updateClockUI();
+    updateAdminPanel(data);
 
     if (gameState.game_over) {
       showGameOverModal(gameState);
@@ -641,6 +872,35 @@
 
     renderBoard();
   }
+
+  function updateAdminPanel(data) {
+    const adminPanelCard = document.getElementById('admin-panel-card');
+    const adminPauseBtn = document.getElementById('btn-admin-pause');
+    const adminKickSelect = document.getElementById('admin-kick-select');
+    if (!adminPanelCard) return;
+
+    const isHost = (data.host_id === playerId) || (currentMode === 'debug') || (myRole !== 'observer');
+    adminPanelCard.style.display = isHost ? 'block' : 'none';
+
+    if (adminPauseBtn && data.is_paused !== undefined) {
+      adminPauseBtn.textContent = data.is_paused ? '▶️ Resume Clock' : '⏸️ Pause Clock';
+    }
+
+    if (adminKickSelect && data.players) {
+      const currentVal = adminKickSelect.value;
+      adminKickSelect.innerHTML = '<option value="">Select occupant...</option>';
+      data.players.forEach(p => {
+        if (p.player_id !== playerId) {
+          const opt = document.createElement('option');
+          opt.value = p.player_id;
+          opt.textContent = `${p.short_id} (${p.color})`;
+          adminKickSelect.appendChild(opt);
+        }
+      });
+      if (currentVal) adminKickSelect.value = currentVal;
+    }
+  }
+
 
   function renderChatHistory(history) {
     if (!chatMessages) return;

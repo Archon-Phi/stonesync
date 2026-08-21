@@ -19,6 +19,7 @@ app = FastAPI(title="StoneSync - Online Multiplayer Go")
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 SOUNDS_DIR = FRONTEND_DIR / "go-sounds"
+MUSIC_DIR = FRONTEND_DIR / "music"
 
 # Ensure sound files exist
 thwack1 = SOUNDS_DIR / "GoGame-Thwack1.wav"
@@ -50,6 +51,24 @@ async def get_go_page():
     if html_file.exists():
         return FileResponse(str(html_file), media_type="text/html")
     return {"error": "go.html not found"}
+
+@app.get("/api/audio-tracks")
+async def get_audio_tracks():
+    tracks = []
+    if MUSIC_DIR.exists():
+        for file in sorted(MUSIC_DIR.iterdir()):
+            if file.is_file() and file.suffix.lower() in [".mp3", ".wav", ".ogg", ".flac", ".m4a"]:
+                clean_name = file.stem.replace("_", " ").replace("-", " ")
+                icon = "🎵" if file.suffix.lower() == ".mp3" else "🎧"
+                tracks.append({
+                    "title": f"{icon} {clean_name}",
+                    "filename": file.name,
+                    "src": f"/static/music/{file.name}",
+                    "type": file.suffix.lower()
+                })
+    return {"tracks": tracks}
+
+
 
 @app.websocket("/ws/go/{room_id}")
 async def websocket_go_endpoint(

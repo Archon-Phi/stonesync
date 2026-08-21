@@ -57,6 +57,11 @@ class Room:
         self.connections: Dict[WebSocket, str] = {}
         self.lock = asyncio.Lock()
         self.chat_history: list = []
+        self.host_id: Optional[str] = None
+        self.is_paused: bool = False
+        self.password: Optional[str] = None
+        self.is_private: bool = False
+
 
         if self.is_ai:
             self.players["bot_stonebot"] = "W"
@@ -66,6 +71,9 @@ class Room:
 
     def register_player(self, player_id: str, preferred_color: Optional[str] = None) -> str:
         """Assign role ('B', 'W', or 'observer') to player_id, swapping roles if necessary."""
+        if not self.host_id:
+            self.host_id = player_id
+
         if preferred_color in ('B', 'W'):
             other_occupant = None
             for pid, color in list(self.players.items()):
@@ -118,10 +126,15 @@ class Room:
         return {
             "type": "state",
             "room_id": self.room_id,
+            "host_id": self.host_id,
+            "is_paused": self.is_paused,
+            "is_private": self.is_private,
             "game_state": self.game.to_dict(now_ts=time.time()),
             "players": self.get_players_info(),
             "chat_history": self.chat_history[-50:]
         }
+
+
 
     async def broadcast(self, message: dict):
         payload_str = json.dumps(message)
@@ -347,12 +360,75 @@ class RoomManager:
                     )
                     state = room.get_state_payload()
                     state["last_action"] = {"action": "reset", "by": role}
-                    await room.broadcast(state)
                     await room.trigger_ai_turn_if_needed()
                 except ValueError as err:
                     await websocket.send_text(json.dumps({"type": "error", "message": str(err)}))
 
+            elif action == "pause_clock":
+
+                if player_id == room.host_id or room.is_debug:
+                    room.is_paused = not room.is_paused
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "pause_clock", "is_paused": room.is_paused}
+                    await room.broadcast(state)
+
+            elif action == "kick_player":
+                if player_id == room.host_id or room.is_debug:
+                    target_pid = data.get("target_player_id")
+                    if target_pid in room.players:
+                        del room.players[target_pid]
+                    for client_ws, pid in list(room.clients.items()):
+                        if pid == target_pid:
+                            try:
+                                await client_ws.send_text(json.dumps({"type": "kicked", "message": "You have been kicked by the room admin."}))
+                            except Exception:
+                                pass
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "kick_player", "target": target_pid}
+                    await room.broadcast(state)
+
+            elif action == "declare_winner":
+                if player_id == room.host_id or room.is_debug:
+                    winner = data.get("winner", "Draw")
+                    room.game.game_over = True
+                    room.game.winner = winner
+                    room.game.win_reason = "adjudication"
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "declare_winner", "winner": winner}
+                    await room.broadcast(state)
+
+            elif action == "set_room_privacy":
+                if player_id == room.host_id or room.is_debug:
+                    pwd = data.get("password")
+                    room.password = pwd if pwd else None
+                    room.is_private = bool(pwd) or data.get("is_private", False)
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "set_room_privacy", "is_private": room.is_private}
+                    await room.broadcast(state)
+
+            elif action == "manual_score_override":
+                if player_id == room.host_id or room.is_debug:
+                    try:
+                        b_score = float(data.get("b_score", 0.0))
+                        w_score = float(data.get("w_score", 0.0))
+                        room.game.game_over = True
+                        if b_score > w_score:
+                            room.game.winner = 'B'
+                            room.game.win_reason = f"Adjudicated Score (B: {b_score} pts vs W: {w_score} pts)"
+                        elif w_score > b_score:
+                            room.game.winner = 'W'
+                            room.game.win_reason = f"Adjudicated Score (W: {w_score} pts vs B: {b_score} pts)"
+                        else:
+                            room.game.winner = 'Draw'
+                            room.game.win_reason = f"Adjudicated Tie ({b_score} pts vs {w_score} pts)"
+                        state = room.get_state_payload()
+                        await room.broadcast(state)
+                    except ValueError:
+                        pass
+
             elif action == "chat":
+
+
                 msg_text = str(data.get("text", "")).strip()
                 if msg_text:
                     chat_item = {

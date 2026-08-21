@@ -55,3 +55,7 @@ if __name__ == "__main__":
     generate_wav(os.path.join(sounds_dir, "GoGame-Thwack3.wav"), frequency=480, duration=0.09, volume=0.85)
     generate_wav(os.path.join(sounds_dir, "GoGame-Thwack4.wav"), frequency=750, duration=0.06, volume=0.85)
     generate_wav(os.path.join(sounds_dir, "GoGame-PieceRemoved.mp3"), frequency=820, duration=0.12, volume=0.9, noise_mix=0.5, double_click=True)
+    generate_wav(os.path.join(sounds_dir, "Zen-Garden-Ambient.mp3"), frequency=220, duration=4.0, volume=0.6, noise_mix=0.8)
+    generate_wav(os.path.join(sounds_dir, "Kyoto-Rainfall.wav"), frequency=330, duration=5.0, volume=0.5, noise_mix=0.9)
+    generate_wav(os.path.join(sounds_dir, "Slate-Clatter-Suite.wav"), frequency=440, duration=3.5, volume=0.7, double_click=True)
+
