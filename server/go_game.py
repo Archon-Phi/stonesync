@@ -4,21 +4,56 @@ Authoritative Go rules implementation: liberties, captures, suicide, Ko, passing
 """
 from typing import Dict, List, Optional, Tuple, Set
 
+def get_handicap_positions(board_size: int, handicap: int) -> List[Tuple[int, int]]:
+    if handicap < 2 or handicap > 9:
+        return []
+    if board_size == 19:
+        top, mid, bot = 3, 9, 15
+    elif board_size == 13:
+        top, mid, bot = 3, 6, 9
+    elif board_size == 9:
+        top, mid, bot = 2, 4, 6
+    else:
+        return []
+
+    coords = {
+        'TR': (top, bot), 'BL': (bot, top), 'BR': (bot, bot), 'TL': (top, top),
+        'C': (mid, mid), 'L': (mid, top), 'R': (mid, bot), 'T': (top, mid), 'B': (bot, mid)
+    }
+
+    if handicap == 2: order = ['TR', 'BL']
+    elif handicap == 3: order = ['TR', 'BL', 'BR']
+    elif handicap == 4: order = ['TR', 'BL', 'BR', 'TL']
+    elif handicap == 5: order = ['TR', 'BL', 'BR', 'TL', 'C']
+    elif handicap == 6: order = ['TR', 'BL', 'BR', 'TL', 'L', 'R']
+    elif handicap == 7: order = ['TR', 'BL', 'BR', 'TL', 'L', 'R', 'C']
+    elif handicap == 8: order = ['TR', 'BL', 'BR', 'TL', 'L', 'R', 'T', 'B']
+    elif handicap == 9: order = ['TR', 'BL', 'BR', 'TL', 'C', 'L', 'R', 'T', 'B']
+    else: order = []
+
+    return [coords[k] for k in order]
+
 class GoGame:
-    def __init__(self, board_size: int = 19, komi: float = 6.5):
+    def __init__(self, board_size: int = 19, komi: Optional[float] = None, handicap: int = 0):
         if board_size not in (9, 13, 19):
             raise ValueError("Board size must be 9, 13, or 19")
         self.board_size = board_size
+        self.handicap = handicap
+        if komi is None:
+            komi = 0.5 if handicap >= 2 else 6.5
         self.komi = float(komi)
-        self.reset()
+        self.reset(board_size=board_size, komi=komi, handicap=handicap)
 
-    def reset(self, board_size: Optional[int] = None, komi: Optional[float] = None):
+    def reset(self, board_size: Optional[int] = None, komi: Optional[float] = None, handicap: Optional[int] = None):
         if board_size is not None:
             if board_size not in (9, 13, 19):
                 raise ValueError("Board size must be 9, 13, or 19")
             self.board_size = board_size
+        if handicap is not None:
+            self.handicap = handicap
         if komi is not None:
             self.komi = float(komi)
+
 
         self.grid: List[List[Optional[str]]] = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.current_player: str = 'B'
@@ -29,10 +64,18 @@ class GoGame:
         self.final_score: Optional[Dict[str, float]] = None
         self.territory: Optional[Dict[str, int]] = None
         self.last_move: Optional[Dict[str, int]] = None
-        
+
+        # Place handicap stones if handicap >= 2
+        if self.handicap >= 2:
+            positions = get_handicap_positions(self.board_size, self.handicap)
+            for r, c in positions:
+                self.grid[r][c] = 'B'
+            self.current_player = 'W'
+
         # History stores tuple of tuples representation of the grid for Ko check
         initial_snapshot = tuple(tuple(row) for row in self.grid)
         self.history: List[Tuple[Tuple[Optional[str], ...], ...]] = [initial_snapshot]
+
 
     def _get_neighbors(self, r: int, c: int) -> List[Tuple[int, int]]:
         neighbors = []
@@ -179,11 +222,12 @@ class GoGame:
             self.winner = 'Draw'
 
     def to_dict(self) -> dict:
-
         return {
             'board_size': self.board_size,
             'komi': self.komi,
+            'handicap': self.handicap,
             'grid': self.grid,
+
             'current_player': self.current_player,
             'captures': self.captures,
             'pass_count': self.pass_count,
