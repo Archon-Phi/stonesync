@@ -1,5 +1,8 @@
 # StoneSync
 
+<img width="2523" height="1234" alt="image" src="https://github.com/user-attachments/assets/6ac60c7b-2a9c-4a8f-ba7f-f14279429063" />
+
+
 **StoneSync** is a standalone, local-first online two-player Go (Weiqi/Baduk) web application with authoritative server-side rule validation, real-time WebSocket room multiplayer, audio sound effects, and a responsive HTML5 Canvas interface.
 
 - **Authoritative Go Game Engine**: Full rule validation on Python backend.
