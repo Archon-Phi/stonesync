@@ -258,18 +258,55 @@
     }, 3200);
   }
 
+  function createDefaultGameState(size = 19, komi = 6.5, handicap = 0) {
+    const grid = Array.from({ length: size }, () => Array(size).fill(null));
+    let firstPlayer = 'B';
+    if (handicap >= 2) {
+      firstPlayer = 'W';
+      const starPts = [
+        [3, 3], [3, 9], [3, 15],
+        [9, 3], [9, 9], [9, 15],
+        [15, 3], [15, 9], [15, 15]
+      ];
+      const count = Math.min(handicap, starPts.length);
+      for (let i = 0; i < count; i++) {
+        const [r, c] = starPts[i];
+        if (r < size && c < size) grid[r][c] = 'B';
+      }
+    }
+    return {
+      board_size: size,
+      komi: komi,
+      handicap: handicap,
+      current_player: firstPlayer,
+      pass_count: 0,
+      captures: { B: 0, W: 0 },
+      game_over: false,
+      grid: grid,
+      last_move: null
+    };
+  }
+
+  currentGameState = createDefaultGameState(currentBoardSize, currentKomi, currentHandicap);
+
   // --- 7. WebSocket Connection ---
   function connectWebSocket() {
     if (socket) {
       socket.close();
+      socket = null;
     }
 
+    const host = window.location.host || '127.0.0.1:8080';
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
+    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}`;
 
-
-
-    socket = new WebSocket(wsUrl);
+    try {
+      socket = new WebSocket(wsUrl);
+    } catch (e) {
+      console.warn('WebSocket init exception:', e);
+      showToast('Server disconnected. Offline practice mode active.', false);
+      return;
+    }
 
     socket.onopen = () => {
       console.log('Connected to StoneSync Room:', currentRoomId);
@@ -289,19 +326,22 @@
     };
 
     socket.onclose = () => {
-      playerRoleBadge.textContent = 'Disconnected (Reconnecting...)';
-      playerRoleBadge.className = 'badge role-badge role-observer';
+      if (playerRoleBadge) {
+        playerRoleBadge.textContent = 'Disconnected (Reconnecting...)';
+        playerRoleBadge.className = 'badge role-badge role-observer';
+      }
       setTimeout(() => {
         if (!socket || socket.readyState === WebSocket.CLOSED) {
           connectWebSocket();
         }
-      }, 2500);
+      }, 3500);
     };
 
     socket.onerror = (err) => {
-      console.error('WebSocket Error:', err);
+      console.warn('WebSocket Error:', err);
     };
   }
+
 
   // --- 8. Handle State Updates ---
   function handleStateUpdate(data) {
