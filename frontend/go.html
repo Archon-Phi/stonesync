@@ -293,7 +293,26 @@
               <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">👑 White Wins</button>
             </div>
           </div>
+
+          <div class="form-group" style="margin-top: 10px;">
+            <label style="font-size: 0.75rem;">Room Privacy &amp; Lock</label>
+            <div style="display: flex; gap: 6px;">
+              <input type="password" id="admin-pass-input" placeholder="Set Password" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+              <button type="button" id="btn-toggle-privacy" class="btn btn-secondary btn-sm">🔒 Lock Room</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 10px;">
+            <label style="font-size: 0.75rem;">Manual Score Override (Points)</label>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <input type="number" id="admin-score-b" placeholder="B pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+              <span style="font-size: 0.8rem;">vs</span>
+              <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+              <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
+            </div>
+          </div>
         </section>
+
 
         <!-- Room Chat & Reactions Panel -->
         <section class="card chat-card">

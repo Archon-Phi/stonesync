@@ -449,6 +449,41 @@
     });
   }
 
+  const btnTogglePrivacy = document.getElementById('btn-toggle-privacy');
+  const adminPassInput = document.getElementById('admin-pass-input');
+  const btnManualScore = document.getElementById('btn-manual-score');
+  const adminScoreB = document.getElementById('admin-score-b');
+  const adminScoreW = document.getElementById('admin-score-w');
+
+  if (btnTogglePrivacy) {
+    btnTogglePrivacy.addEventListener('click', () => {
+      const pwd = adminPassInput ? adminPassInput.value : '';
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          action: 'set_room_privacy',
+          password: pwd,
+          is_private: Boolean(pwd)
+        }));
+        showToast(pwd ? '🔒 Room Password Set & Locked' : '🔓 Room Unlocked', false);
+      }
+    });
+  }
+
+  if (btnManualScore) {
+    btnManualScore.addEventListener('click', () => {
+      const bPts = adminScoreB ? adminScoreB.value : '0';
+      const wPts = adminScoreW ? adminScoreW.value : '0';
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          action: 'manual_score_override',
+          b_score: parseFloat(bPts) || 0,
+          w_score: parseFloat(wPts) || 0
+        }));
+      }
+    });
+  }
+
+
 
   if (handicapSelect) {
     handicapSelect.addEventListener('change', () => {
