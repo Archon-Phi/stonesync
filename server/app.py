@@ -67,8 +67,9 @@ async def websocket_go_endpoint(
     fischer_increment_sec: float = Query(5.0)
 ):
 
-    is_solo = (mode == "solo")
+    is_solo = (mode in ("solo", "debug"))
     is_ai = (mode == "ai")
+    is_debug = (mode == "debug")
     room, role = await room_manager.connect_client(
         websocket,
         room_id,
@@ -78,11 +79,13 @@ async def websocket_go_endpoint(
         handicap=handicap,
         is_solo=is_solo,
         is_ai=is_ai,
+        is_debug=is_debug,
         time_control=time_control,
         main_time_sec=main_time_sec,
         byoyomi_periods=byoyomi_periods,
         byoyomi_time_sec=byoyomi_time_sec,
         fischer_increment_sec=fischer_increment_sec
+
     )
 
 

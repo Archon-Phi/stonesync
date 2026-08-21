@@ -568,7 +568,11 @@
   }
 
   function updateRoleBadge() {
-    if (myRole === 'B') {
+    if (currentMode === 'debug') {
+      const activeColor = currentGameState ? (currentGameState.current_player === 'B' ? 'Black' : 'White') : 'Black';
+      playerRoleBadge.textContent = `🛠️ Debug Sandbox (${activeColor})`;
+      playerRoleBadge.className = 'badge role-badge role-black';
+    } else if (myRole === 'B') {
       playerRoleBadge.textContent = 'Black (First Move)';
       playerRoleBadge.className = 'badge role-badge role-black';
     } else if (myRole === 'W') {
@@ -579,6 +583,7 @@
       playerRoleBadge.className = 'badge role-badge role-observer';
     }
   }
+
 
   function updateTurnIndicator(state) {
     const isBlack = state.current_player === 'B';
@@ -633,10 +638,11 @@
   }
 
   function updateButtons(state) {
-    const isMyTurn = (currentMode === 'solo') || (myRole === 'B' && state.current_player === 'B') || (myRole === 'W' && state.current_player === 'W');
+    const isMyTurn = (currentMode === 'solo' || currentMode === 'debug') || (myRole === 'B' && state.current_player === 'B') || (myRole === 'W' && state.current_player === 'W');
     btnPass.disabled = !isMyTurn || state.game_over;
-    if (btnResign) btnResign.disabled = (myRole === 'observer' && currentMode !== 'solo') || state.game_over;
+    if (btnResign) btnResign.disabled = (myRole === 'observer' && currentMode !== 'solo' && currentMode !== 'debug') || state.game_over;
   }
+
 
   function showGameOverModal(state) {
     komiDisplay.textContent = state.komi;
@@ -1074,14 +1080,15 @@
     getAudioContext();
 
     if (!currentGameState || currentGameState.game_over) return;
-    if (currentMode !== 'solo' && myRole === 'observer') {
+    if (currentMode !== 'solo' && currentMode !== 'debug' && myRole === 'observer') {
       showToast('Observers cannot place stones', true);
       return;
     }
-    if (currentMode !== 'solo' && currentGameState.current_player !== myRole) {
+    if (currentMode !== 'solo' && currentMode !== 'debug' && currentGameState.current_player !== myRole) {
       showToast(`Not your turn! Waiting for ${currentGameState.current_player === 'B' ? 'Black' : 'White'}`, true);
       return;
     }
+
 
 
     const rect = canvas.getBoundingClientRect();

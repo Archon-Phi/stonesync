@@ -31,6 +31,7 @@ class Room:
         handicap: int = 0,
         is_solo: bool = False,
         is_ai: bool = False,
+        is_debug: bool = False,
         time_control: str = 'none',
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
@@ -38,8 +39,10 @@ class Room:
         fischer_increment_sec: float = 5.0
     ):
         self.room_id = room_id
-        self.is_solo = is_solo
+        self.is_solo = is_solo or is_debug
         self.is_ai = is_ai
+        self.is_debug = is_debug
+
         self.game = GoGame(
             board_size=board_size,
             komi=komi,
@@ -146,6 +149,7 @@ class RoomManager:
         handicap: int = 0,
         is_solo: bool = False,
         is_ai: bool = False,
+        is_debug: bool = False,
         time_control: str = 'none',
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
@@ -160,6 +164,7 @@ class RoomManager:
                 handicap=handicap,
                 is_solo=is_solo,
                 is_ai=is_ai,
+                is_debug=is_debug,
                 time_control=time_control,
                 main_time_sec=main_time_sec,
                 byoyomi_periods=byoyomi_periods,
@@ -178,6 +183,7 @@ class RoomManager:
         handicap: int = 0,
         is_solo: bool = False,
         is_ai: bool = False,
+        is_debug: bool = False,
         time_control: str = 'none',
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
@@ -192,14 +198,17 @@ class RoomManager:
             handicap=handicap,
             is_solo=is_solo,
             is_ai=is_ai,
+            is_debug=is_debug,
             time_control=time_control,
             main_time_sec=main_time_sec,
             byoyomi_periods=byoyomi_periods,
             byoyomi_time_sec=byoyomi_time_sec,
             fischer_increment_sec=fischer_increment_sec
         )
-        if is_solo:
+        if is_solo or is_debug:
             room.is_solo = True
+        if is_debug:
+            room.is_debug = True
         if is_ai:
             room.is_ai = True
             if "bot_stonebot" not in room.players:
@@ -234,8 +243,9 @@ class RoomManager:
         action = data.get("action")
         async with room.lock:
             role = room.players.get(player_id, 'observer')
-            if room.is_solo or data.get("is_solo"):
+            if room.is_solo or room.is_debug or data.get("is_solo") or data.get("is_debug"):
                 role = room.game.current_player
+
 
             if action == "move":
                 r = data.get("r")
