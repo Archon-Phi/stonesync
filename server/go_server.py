@@ -355,9 +355,12 @@ class RoomManager:
                     )
                     state = room.get_state_payload()
                     state["last_action"] = {"action": "reset", "by": role}
-                    await room.broadcast(state)
                     await room.trigger_ai_turn_if_needed()
+                except ValueError as err:
+                    await websocket.send_text(json.dumps({"type": "error", "message": str(err)}))
+
             elif action == "pause_clock":
+
                 if player_id == room.host_id or room.is_debug:
                     room.is_paused = not room.is_paused
                     state = room.get_state_payload()
