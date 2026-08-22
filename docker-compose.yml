@@ -23,9 +23,3 @@ services:
       - "traefik.http.routers.stonesync.tls=true"
       - "traefik.http.routers.stonesync.tls.certresolver=httpresolver"
       - "traefik.http.services.stonesync.loadbalancer.server.port=8080"
-    networks:
-      - web_network
-
-networks:
-  web_network:
-    name: web_network
