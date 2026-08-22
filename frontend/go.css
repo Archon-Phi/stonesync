@@ -28,6 +28,25 @@
   --glow-cyan: 0 0 20px rgba(56, 189, 248, 0.25);
 }
 
+/* --- Iconshock Icon Utilities --- */
+.icon-sm {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: -2px;
+  object-fit: contain;
+  margin-right: 4px;
+}
+
+.icon-xs {
+  width: 13px;
+  height: 13px;
+  display: inline-block;
+  vertical-align: -1px;
+  object-fit: contain;
+  margin-right: 3px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

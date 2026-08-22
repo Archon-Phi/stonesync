@@ -30,39 +30,52 @@
         </div>
 
         <div class="side-switcher" id="nav-side-switcher">
-          <button type="button" class="btn-side side-btn-b active" data-color="B" title="Switch to Black">⚫ Black</button>
-          <button type="button" class="btn-side side-btn-w" data-color="W" title="Switch to White">⚪ White</button>
-          <button type="button" class="btn-side side-btn-both" data-color="both" title="Play Both Sides (Debug Sandbox)">🛠️ Both</button>
+          <button type="button" class="btn-side side-btn-b active" data-color="B" title="Switch to Black">
+            <img src="/static/assets/icons/iconshock/black-stone.svg" class="icon-sm" alt="Black"> Black
+          </button>
+          <button type="button" class="btn-side side-btn-w" data-color="W" title="Switch to White">
+            <img src="/static/assets/icons/iconshock/white-stone.svg" class="icon-sm" alt="White"> White
+          </button>
+          <button type="button" class="btn-side side-btn-both" data-color="both" title="Play Both Sides (Debug Sandbox)">
+            <img src="/static/assets/icons/iconshock/sandbox.svg" class="icon-sm" alt="Both"> Both
+          </button>
         </div>
 
         <div class="theme-picker">
           <select id="theme-select" title="Board Theme">
-            <option value="kaya" selected>🪵 Kaya Wood</option>
-            <option value="obsidian">💎 Obsidian</option>
-            <option value="cyberpunk">⚡ Cyberpunk</option>
+            <option value="kaya" selected>Kaya Wood</option>
+            <option value="obsidian">Obsidian</option>
+            <option value="cyberpunk">Cyberpunk</option>
           </select>
         </div>
 
 
         <!-- Top Bar MP3 Audio Player -->
         <div class="mp3-player-widget" id="mp3-player-widget">
-          <button type="button" id="btn-mp3-prev" class="btn-mp3-ctrl" title="Previous Track">⏮️</button>
-          <button type="button" id="btn-mp3-play" class="btn-mp3-ctrl btn-mp3-play" title="Play / Pause">▶️</button>
-          <button type="button" id="btn-mp3-next" class="btn-mp3-ctrl" title="Next Track">⏭️</button>
+          <button type="button" id="btn-mp3-prev" class="btn-mp3-ctrl" title="Previous Track">
+            <img src="/static/assets/icons/iconshock/prev.svg" class="icon-xs" alt="Prev">
+          </button>
+          <button type="button" id="btn-mp3-play" class="btn-mp3-ctrl btn-mp3-play" title="Play / Pause">
+            <img src="/static/assets/icons/iconshock/play.svg" class="icon-xs" alt="Play">
+          </button>
+          <button type="button" id="btn-mp3-next" class="btn-mp3-ctrl" title="Next Track">
+            <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs" alt="Next">
+          </button>
           <div class="mp3-track-info">
-            <span id="mp3-track-title" class="mp3-title">🎵 Zen Garden Ambient</span>
+            <span id="mp3-track-title" class="mp3-title">
+              <img src="/static/assets/icons/iconshock/music.svg" class="icon-xs" alt="Music"> Zen Garden Ambient
+            </span>
             <span id="mp3-track-time" class="mp3-time mono">0:00 / 0:00</span>
           </div>
           <audio id="mp3-audio-element" preload="metadata"></audio>
         </div>
 
         <button type="button" id="btn-sensei-hints" class="btn btn-sm btn-accent" title="AI Sensei Move Evaluator">
-
-          💡 Sensei Hints
+          <img src="/static/assets/icons/iconshock/bulb.svg" class="icon-sm" alt="Sensei"> Sensei Hints
         </button>
 
         <button type="button" id="btn-zen-ambient" class="btn btn-sm btn-ghost" title="Toggle Zen Ambient Soundscape">
-          🔊 Zen Ambient
+          <img src="/static/assets/icons/iconshock/volume.svg" class="icon-sm" alt="Volume"> Zen Ambient
         </button>
 
         <button type="button" id="btn-export-sgf" class="btn btn-sm btn-ghost" title="Export SGF Game Record">
@@ -95,19 +108,19 @@
           <!-- Primary In-Game Action Bar -->
           <div class="board-actions">
             <button id="btn-pass" class="btn btn-action btn-pass" disabled>
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <img src="/static/assets/icons/iconshock/pass.svg" class="icon-sm" alt="Pass">
               Pass Turn
             </button>
             <button id="btn-heatmap" class="btn btn-action btn-secondary">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
+              <img src="/static/assets/icons/iconshock/heatmap.svg" class="icon-sm" alt="Heatmap">
               Heatmap
             </button>
             <button id="btn-resign" class="btn btn-action btn-danger" disabled>
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+              <img src="/static/assets/icons/iconshock/flag.svg" class="icon-sm" alt="Resign">
               Resign
             </button>
             <button id="btn-reset" class="btn btn-action btn-reset">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              <img src="/static/assets/icons/iconshock/sandbox.svg" class="icon-sm" alt="Reset">
               New Match
             </button>
           </div>
