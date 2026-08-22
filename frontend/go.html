@@ -116,7 +116,38 @@
 
       <!-- Right Column: Sidebar Panels -->
       <aside class="sidebar-section">
-        
+
+        <!-- Sensei AI Positional Evaluation & Win-Rate Card -->
+        <section class="card ai-eval-card" id="ai-eval-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg class="icon text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              Sensei Positional Eval
+            </h2>
+            <span id="score-lead-badge" class="badge role-badge role-black">B +0.5 pts</span>
+          </div>
+
+          <!-- Win-Rate Split Bar -->
+          <div class="win-rate-container">
+            <div class="win-rate-labels">
+              <span class="win-rate-label b-label" id="wr-black-text">Black 50.0%</span>
+              <span class="win-rate-label w-label" id="wr-white-text">White 50.0%</span>
+            </div>
+            <div class="win-rate-bar-track">
+              <div class="win-rate-bar-fill-b" id="wr-bar-fill-b" style="width: 50%;"></div>
+              <div class="win-rate-bar-fill-w" id="wr-bar-fill-w" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <!-- Top Tactical Move Recommendations -->
+          <div class="top-moves-panel" id="top-moves-panel">
+            <span class="top-moves-title">Top Recommended Moves</span>
+            <div class="top-moves-list" id="top-moves-list">
+              <div class="top-move-item empty-state">Calculating tactical move evaluation...</div>
+            </div>
+          </div>
+        </section>
+
         <!-- Live Match Clocks & Score Panel -->
         <section class="card match-card">
           <div class="card-header">

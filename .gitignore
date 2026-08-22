@@ -33,7 +33,10 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Snapshots & Artifacts
 .snapshots/
+artifacts/
 *.swp
 *.swo
 

@@ -19,6 +19,7 @@ from typing import Dict, Set, Optional, Any, Tuple
 from fastapi import WebSocket, WebSocketDisconnect
 from server.go_game import GoGame
 from server.agents.bot import StoneBot
+from server.evaluator import evaluate_game
 
 logger = logging.getLogger("StoneSyncServer")
 
@@ -131,7 +132,8 @@ class Room:
             "is_private": self.is_private,
             "game_state": self.game.to_dict(now_ts=time.time()),
             "players": self.get_players_info(),
-            "chat_history": self.chat_history[-50:]
+            "chat_history": self.chat_history[-50:],
+            "ai_evaluation": evaluate_game(self.game)
         }
 
 

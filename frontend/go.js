@@ -22,6 +22,8 @@
   let myRole = 'observer'; // 'B', 'W', or 'observer'
   let prevCapturesCount = 0;
   let hoveredIntersection = null;
+  let lastAIEvaluation = null;
+  let senseiHintsActive = false;
 
   // Theme & Visual Features State
   let currentTheme = localStorage.getItem('stonesync_theme') || 'kaya';
@@ -255,23 +257,37 @@
   }
 
 
-  let senseiHintsActive = false;
   let zenAmbientActive = false;
   let zenRainNode = null;
   let zenTimer = null;
 
-  const btnSenseiHints = document.getElementById('btn-sensei-hints');
-  const btnZenAmbient = document.getElementById('btn-zen-ambient');
-
-  if (btnSenseiHints) {
-    btnSenseiHints.addEventListener('click', () => {
-      getAudioContext();
+  document.addEventListener('click', (e) => {
+    const btnSensei = e.target.closest('#btn-sensei-hints');
+    if (btnSensei) {
+      try { getAudioContext(); } catch (err) {}
       senseiHintsActive = !senseiHintsActive;
-      btnSenseiHints.classList.toggle('active', senseiHintsActive);
-      showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
-      renderBoard();
-    });
-  }
+      btnSensei.classList.toggle('active', senseiHintsActive);
+      try {
+        showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
+        renderBoard();
+      } catch (err) {}
+    }
+
+    const btnZenAmbient = e.target.closest('#btn-zen-ambient');
+    if (btnZenAmbient) {
+      getAudioContext();
+      preloadAudioAssets();
+      zenAmbientActive = !zenAmbientActive;
+      btnZenAmbient.classList.toggle('active', zenAmbientActive);
+      if (zenAmbientActive) {
+        startZenAmbientSoundscape();
+        showToast('🔊 Zen Ambient Soundscape Activated (Rain & Bamboo Fountain)', false);
+      } else {
+        stopZenAmbientSoundscape();
+        showToast('🔇 Zen Ambient Soundscape Muted', true);
+      }
+    }
+  });
 
   let mp3Playlist = [
     { title: "🎵 Binary Stream", src: "./music/Binary_Stream.mp3" },
@@ -372,25 +388,6 @@
 
   loadTrack(0);
   fetchAudioTracks();
-
-
-  if (btnZenAmbient) {
-
-    btnZenAmbient.addEventListener('click', () => {
-      getAudioContext();
-      preloadAudioAssets();
-      zenAmbientActive = !zenAmbientActive;
-
-      btnZenAmbient.classList.toggle('active', zenAmbientActive);
-      if (zenAmbientActive) {
-        startZenAmbientSoundscape();
-        showToast('🔊 Zen Ambient Soundscape Activated (Rain & Bamboo Fountain)', false);
-      } else {
-        stopZenAmbientSoundscape();
-        showToast('🔇 Zen Ambient Soundscape Muted', true);
-      }
-    });
-  }
 
   function startZenAmbientSoundscape() {
     try {
@@ -526,6 +523,8 @@
           if (modeSelect) modeSelect.value = 'online';
         }
       }
+
+      if (currentGameState) updateButtons(currentGameState);
 
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
@@ -878,6 +877,11 @@
     updateClockUI();
     updateAdminPanel(data);
 
+    if (data.ai_evaluation) {
+      lastAIEvaluation = data.ai_evaluation;
+      updateAIEvaluationUI(lastAIEvaluation);
+    }
+
     if (gameState.game_over) {
       showGameOverModal(gameState);
     } else {
@@ -912,6 +916,93 @@
         }
       });
       if (currentVal) adminKickSelect.value = currentVal;
+    }
+  }
+
+  function columnLetter(c) {
+    // Standard Go notation skips I so it is not confused with 1.
+    return String.fromCharCode(65 + c + (c >= 8 ? 1 : 0));
+  }
+
+  function toBoardCoords(r, c, size = 19) {
+    return `${columnLetter(c)}${(size - r).toString()}`;
+  }
+
+  function updateAIEvaluationUI(evalData) {
+    if (!evalData) return;
+
+    const scoreLeadBadge = document.getElementById('score-lead-badge');
+    const wrBlackText = document.getElementById('wr-black-text');
+    const wrWhiteText = document.getElementById('wr-white-text');
+    const wrBarFillB = document.getElementById('wr-bar-fill-b');
+    const wrBarFillW = document.getElementById('wr-bar-fill-w');
+    const topMovesList = document.getElementById('top-moves-list');
+
+    if (scoreLeadBadge) {
+      scoreLeadBadge.textContent = evalData.score_lead || 'Even Match';
+      if (evalData.score_lead.startsWith('B')) {
+        scoreLeadBadge.className = 'badge role-badge role-black';
+      } else if (evalData.score_lead.startsWith('W')) {
+        scoreLeadBadge.className = 'badge role-badge role-white';
+      } else {
+        scoreLeadBadge.className = 'badge role-badge role-observer';
+      }
+    }
+
+    if (wrBlackText) wrBlackText.textContent = `Black ${evalData.win_rate_black}%`;
+    if (wrWhiteText) wrWhiteText.textContent = `White ${evalData.win_rate_white}%`;
+
+    if (wrBarFillB) wrBarFillB.style.width = `${evalData.win_rate_black}%`;
+    if (wrBarFillW) wrBarFillW.style.width = `${evalData.win_rate_white}%`;
+
+    if (topMovesList) {
+      topMovesList.innerHTML = '';
+      if (!evalData.top_moves || evalData.top_moves.length === 0) {
+        topMovesList.innerHTML = '<div class="top-move-item empty-state">No legal move recommendations available.</div>';
+        return;
+      }
+
+      evalData.top_moves.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'top-move-item';
+        const coordsText = toBoardCoords(m.r, m.c, currentGameState ? currentGameState.board_size : currentBoardSize);
+
+        item.innerHTML = `
+          <span class="top-move-badge">${m.badge || '①'}</span>
+          <span class="top-move-coords">${coordsText}</span>
+          <div class="top-move-meta">
+            <span class="top-move-note">${m.note}</span>
+            <span class="top-move-winrate">Win Rate: ${m.win_rate_b}% (B) / ${m.win_rate_w}% (W)</span>
+          </div>
+        `;
+
+        item.addEventListener('mouseenter', () => {
+          hoveredIntersection = { r: m.r, c: m.c };
+          renderBoard();
+        });
+
+        item.addEventListener('mouseleave', () => {
+          hoveredIntersection = null;
+          renderBoard();
+        });
+
+        item.addEventListener('click', () => {
+          if (!currentGameState || currentGameState.game_over) return;
+          if (currentMode !== 'solo' && currentMode !== 'debug' && myRole === 'observer') {
+            showToast('Observers cannot place stones', true);
+            return;
+          }
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+              action: 'move',
+              r: m.r,
+              c: m.c
+            }));
+          }
+        });
+
+        topMovesList.appendChild(item);
+      });
     }
   }
 
@@ -1018,7 +1109,7 @@
 
   function updateLastMove(state) {
     if (state.last_move) {
-      const colLetter = String.fromCharCode(65 + state.last_move.c);
+      const colLetter = columnLetter(state.last_move.c);
       const rowNum = state.board_size - state.last_move.r;
       lastMoveText.textContent = `${colLetter}${rowNum} (Row ${state.last_move.r + 1}, Col ${state.last_move.c + 1})`;
     } else {
@@ -1242,7 +1333,7 @@
     ctx.textBaseline = 'middle';
 
     for (let i = 0; i < size; i++) {
-      const colChar = String.fromCharCode(65 + i);
+      const colChar = columnLetter(i);
       const rowNum = (size - i).toString();
 
       ctx.fillText(colChar, startX + i * cellSize, startY - 18);
@@ -1372,50 +1463,36 @@
 
   function renderSenseiHints(startX, startY, cellSize, size, grid) {
     if (!currentGameState || currentGameState.game_over) return;
+    if (!lastAIEvaluation || !lastAIEvaluation.top_moves) return;
 
-    const candidates = [];
-    const starPts = [
-      [3, 3], [3, Math.floor(size/2)], [3, size - 4],
-      [Math.floor(size/2), 3], [Math.floor(size/2), Math.floor(size/2)], [Math.floor(size/2), size - 4],
-      [size - 4, 3], [size - 4, Math.floor(size/2)], [size - 4, size - 4]
-    ];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+    lastAIEvaluation.top_moves.forEach((cand, idx) => {
+      if (grid[cand.r] && grid[cand.r][cand.c] !== null) return;
 
-    starPts.forEach(([r, c]) => {
-      if (grid[r] && grid[r][c] === null) {
-        candidates.push({ r, c, winPct: 68, label: '🥇 68%' });
-      }
-    });
-
-    if (candidates.length < 3) {
-      for (let r = 2; r < size - 2; r += 3) {
-        for (let c = 2; c < size - 2; c += 3) {
-          if (grid[r] && grid[r][c] === null) {
-            candidates.push({ r, c, winPct: 54, label: '🥈 54%' });
-            if (candidates.length >= 3) break;
-          }
-        }
-        if (candidates.length >= 3) break;
-      }
-    }
-
-    const colors = ['#10B981', '#3B82F6', '#F59E0B'];
-    candidates.slice(0, 3).forEach((cand, idx) => {
       const cx = startX + cand.c * cellSize;
       const cy = startY + cand.r * cellSize;
+      const color = colors[idx] || '#3b82f6';
+      const label = `${cand.badge} ${cand.win_rate_b}%`;
 
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cx, cy, cellSize * 0.42, 0, Math.PI * 2);
+      ctx.arc(cx, cy, cellSize * 0.44, 0, Math.PI * 2);
       ctx.lineWidth = 3;
-      ctx.strokeStyle = colors[idx] || '#10B981';
-      ctx.shadowColor = colors[idx] || '#10B981';
-      ctx.shadowBlur = 10;
+      ctx.strokeStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
       ctx.stroke();
 
+      ctx.beginPath();
+      ctx.arc(cx, cy, cellSize * 0.36, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+      ctx.fill();
+
       ctx.font = 'bold 11px "Space Mono", monospace';
-      ctx.fillStyle = colors[idx] || '#10B981';
+      ctx.fillStyle = color;
       ctx.textAlign = 'center';
-      ctx.fillText(cand.label, cx, cy + 4);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, cy);
       ctx.restore();
     });
   }
