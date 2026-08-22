@@ -142,26 +142,33 @@
               <img src="/static/assets/icons/iconshock/stats.svg" class="icon-sm" alt="Stats">
               Sensei Positional Eval
             </h2>
-            <span id="score-lead-badge" class="badge role-badge role-black">B +0.5 pts</span>
-          </div>
-
-          <!-- Win-Rate Split Bar -->
-          <div class="win-rate-container">
-            <div class="win-rate-labels">
-              <span class="win-rate-label b-label" id="wr-black-text">Black 50.0%</span>
-              <span class="win-rate-label w-label" id="wr-white-text">White 50.0%</span>
-            </div>
-            <div class="win-rate-bar-track">
-              <div class="win-rate-bar-fill-b" id="wr-bar-fill-b" style="width: 50%;"></div>
-              <div class="win-rate-bar-fill-w" id="wr-bar-fill-w" style="width: 50%;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="score-lead-badge" class="badge role-badge role-black">B +0.5 pts</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
             </div>
           </div>
 
-          <!-- Top Tactical Move Recommendations -->
-          <div class="top-moves-panel" id="top-moves-panel">
-            <span class="top-moves-title">Top Recommended Moves</span>
-            <div class="top-moves-list" id="top-moves-list">
-              <div class="top-move-item empty-state">Calculating tactical move evaluation...</div>
+          <div class="card-content">
+            <!-- Win-Rate Split Bar -->
+            <div class="win-rate-container">
+              <div class="win-rate-labels">
+                <span class="win-rate-label b-label" id="wr-black-text">Black 50.0%</span>
+                <span class="win-rate-label w-label" id="wr-white-text">White 50.0%</span>
+              </div>
+              <div class="win-rate-bar-track">
+                <div class="win-rate-bar-fill-b" id="wr-bar-fill-b" style="width: 50%;"></div>
+                <div class="win-rate-bar-fill-w" id="wr-bar-fill-w" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <!-- Top Tactical Move Recommendations -->
+            <div class="top-moves-panel" id="top-moves-panel">
+              <span class="top-moves-title">Top Recommended Moves</span>
+              <div class="top-moves-list" id="top-moves-list">
+                <div class="top-move-item empty-state">Calculating tactical move evaluation...</div>
+              </div>
             </div>
           </div>
         </section>
@@ -173,57 +180,64 @@
               <img src="/static/assets/icons/iconshock/timer.svg" class="icon-sm" alt="Timer">
               Live Match Clocks
             </h2>
-            <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
+            </div>
           </div>
 
-          <!-- Digital Clocks -->
-          <div class="clocks-container" id="clocks-container" style="display: none;">
-            <div class="clock-box" id="clock-box-black">
-              <div class="clock-player">
-                <span class="stone-icon stone-black"></span>
-                <span>Black</span>
+          <div class="card-content">
+            <!-- Digital Clocks -->
+            <div class="clocks-container" id="clocks-container" style="display: none;">
+              <div class="clock-box" id="clock-box-black">
+                <div class="clock-player">
+                  <span class="stone-icon stone-black"></span>
+                  <span>Black</span>
+                </div>
+                <span class="clock-time mono" id="clock-time-black">10:00</span>
+                <span class="clock-sub" id="clock-sub-black"></span>
               </div>
-              <span class="clock-time mono" id="clock-time-black">10:00</span>
-              <span class="clock-sub" id="clock-sub-black"></span>
-            </div>
 
-            <div class="clock-box" id="clock-box-white">
-              <div class="clock-player">
-                <span class="stone-icon stone-white"></span>
-                <span>White</span>
+              <div class="clock-box" id="clock-box-white">
+                <div class="clock-player">
+                  <span class="stone-icon stone-white"></span>
+                  <span>White</span>
+                </div>
+                <span class="clock-time mono" id="clock-time-white">10:00</span>
+                <span class="clock-sub" id="clock-sub-white"></span>
               </div>
-              <span class="clock-time mono" id="clock-time-white">10:00</span>
-              <span class="clock-sub" id="clock-sub-white"></span>
             </div>
-          </div>
 
-          <!-- Match Telemetry Grid -->
-          <div class="telemetry-grid">
-            <div class="telemetry-item">
-              <span class="telemetry-label">Current Turn</span>
-              <span id="turn-indicator" class="badge turn-badge turn-black">
-                <span class="stone-icon stone-black"></span> Black
-              </span>
+            <!-- Match Telemetry Grid -->
+            <div class="telemetry-grid">
+              <div class="telemetry-item">
+                <span class="telemetry-label">Current Turn</span>
+                <span id="turn-indicator" class="badge turn-badge turn-black">
+                  <span class="stone-icon stone-black"></span> Black
+                </span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Passes</span>
+                <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Last Move</span>
+                <span id="last-move-text" class="status-value mono">—</span>
+              </div>
             </div>
-            <div class="telemetry-item">
-              <span class="telemetry-label">Passes</span>
-              <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
-            </div>
-            <div class="telemetry-item">
-              <span class="telemetry-label">Last Move</span>
-              <span id="last-move-text" class="status-value mono">—</span>
-            </div>
-          </div>
 
-          <!-- Captures Display -->
-          <div class="captures-bar">
-            <div class="cap-box cap-black">
-              <span class="cap-label"><span class="stone-icon stone-black"></span> Captures</span>
-              <span id="black-captures" class="cap-num">0</span>
-            </div>
-            <div class="cap-box cap-white">
-              <span class="cap-label"><span class="stone-icon stone-white"></span> Captures</span>
-              <span id="white-captures" class="cap-num">0</span>
+            <!-- Captures Display -->
+            <div class="captures-bar">
+              <div class="cap-box cap-black">
+                <span class="cap-label"><span class="stone-icon stone-black"></span> Captures</span>
+                <span id="black-captures" class="cap-num">0</span>
+              </div>
+              <div class="cap-box cap-white">
+                <span class="cap-label"><span class="stone-icon stone-white"></span> Captures</span>
+                <span id="white-captures" class="cap-num">0</span>
+              </div>
             </div>
           </div>
         </section>
@@ -334,59 +348,66 @@
               <img src="/static/assets/icons/iconshock/admin.svg" class="icon-sm" alt="Admin">
               Room Admin Panel
             </h2>
-            <span class="badge role-observer" id="admin-status-badge">Host Controls</span>
-          </div>
-
-          <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button type="button" id="btn-admin-pause" class="btn btn-secondary btn-sm" style="flex: 1;">
-              <img src="/static/assets/icons/iconshock/pause.svg" class="icon-sm" alt="Pause"> Pause Clock
-            </button>
-            <button type="button" id="btn-admin-reset" class="btn btn-secondary btn-sm" style="flex: 1;">
-              <img src="/static/assets/icons/iconshock/reset.svg" class="icon-sm" alt="Reset"> Reset Board
-            </button>
-          </div>
-
-          <div class="form-group" style="margin-top: 10px;">
-            <label for="admin-kick-select" style="font-size: 0.75rem;">Kick Player / Observer</label>
-            <div style="display: flex; gap: 6px;">
-              <select id="admin-kick-select" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
-                <option value="">Select occupant...</option>
-              </select>
-              <button type="button" id="btn-admin-kick" class="btn btn-danger btn-sm">
-                <img src="/static/assets/icons/iconshock/kick.svg" class="icon-sm" alt="Kick"> Kick
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge role-observer" id="admin-status-badge">Host Controls</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
               </button>
             </div>
           </div>
 
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Adjudicate Winner</label>
-            <div style="display: flex; gap: 6px;">
-              <button type="button" id="btn-award-black" class="btn btn-secondary btn-sm" style="flex: 1;">
-                <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> Black Wins
+          <div class="card-content">
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button type="button" id="btn-admin-pause" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <img src="/static/assets/icons/iconshock/pause.svg" class="icon-sm" alt="Pause"> Pause Clock
               </button>
-              <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">
-                <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> White Wins
-              </button>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Room Privacy &amp; Lock</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="password" id="admin-pass-input" placeholder="Set Password" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
-              <button type="button" id="btn-toggle-privacy" class="btn btn-secondary btn-sm">
-                <img src="/static/assets/icons/iconshock/lock.svg" class="icon-sm" alt="Lock"> Lock Room
+              <button type="button" id="btn-admin-reset" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <img src="/static/assets/icons/iconshock/reset.svg" class="icon-sm" alt="Reset"> Reset Board
               </button>
             </div>
-          </div>
 
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Manual Score Override (Points)</label>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <input type="number" id="admin-score-b" placeholder="B pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
-              <span style="font-size: 0.8rem;">vs</span>
-              <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
-              <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
+            <div class="form-group" style="margin-top: 10px;">
+              <label for="admin-kick-select" style="font-size: 0.75rem;">Kick Player / Observer</label>
+              <div style="display: flex; gap: 6px;">
+                <select id="admin-kick-select" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+                  <option value="">Select occupant...</option>
+                </select>
+                <button type="button" id="btn-admin-kick" class="btn btn-danger btn-sm">
+                  <img src="/static/assets/icons/iconshock/kick.svg" class="icon-sm" alt="Kick"> Kick
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Adjudicate Winner</label>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" id="btn-award-black" class="btn btn-secondary btn-sm" style="flex: 1;">
+                  <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> Black Wins
+                </button>
+                <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">
+                  <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> White Wins
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Room Privacy &amp; Lock</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="password" id="admin-pass-input" placeholder="Set Password" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+                <button type="button" id="btn-toggle-privacy" class="btn btn-secondary btn-sm">
+                  <img src="/static/assets/icons/iconshock/lock.svg" class="icon-sm" alt="Lock"> Lock Room
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Manual Score Override (Points)</label>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="number" id="admin-score-b" placeholder="B pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+                <span style="font-size: 0.8rem;">vs</span>
+                <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+                <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
+              </div>
             </div>
           </div>
         </section>
@@ -394,29 +415,35 @@
 
         <!-- Room Chat & Reactions Panel -->
         <section class="card chat-card">
-
-          <h2 class="card-title">
-            <img src="/static/assets/icons/iconshock/chat.svg" class="icon-sm" alt="Chat">
-            Room Chat
-          </h2>
+          <div class="card-header">
+            <h2 class="card-title">
+              <img src="/static/assets/icons/iconshock/chat.svg" class="icon-sm" alt="Chat">
+              Room Chat
+            </h2>
+            <button type="button" class="btn-card-toggle" title="Toggle Panel">
+              <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+            </button>
+          </div>
           
-          <div class="reactions-bar">
-            <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
-            <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
-            <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
-            <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
-            <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
-            <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
-          </div>
+          <div class="card-content">
+            <div class="reactions-bar">
+              <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
+              <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
+              <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
+              <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
+              <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
+              <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
+            </div>
 
-          <div id="chat-messages" class="chat-messages">
-            <span class="muted">Welcome to room chat!</span>
-          </div>
+            <div id="chat-messages" class="chat-messages">
+              <span class="muted">Welcome to room chat!</span>
+            </div>
 
-          <form id="chat-form" class="chat-form">
-            <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
-            <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
-          </form>
+            <form id="chat-form" class="chat-form">
+              <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
+              <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
+            </form>
+          </div>
         </section>
 
         <!-- Connected Players List -->
@@ -426,12 +453,19 @@
               <img src="/static/assets/icons/iconshock/users.svg" class="icon-sm" alt="Users">
               Connected Players
             </h2>
-            <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
-              <img src="/static/assets/icons/iconshock/pencil.svg" class="icon-sm" alt="Edit"> Edit Name
-            </button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
+                <img src="/static/assets/icons/iconshock/pencil.svg" class="icon-sm" alt="Edit"> Edit Name
+              </button>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
+            </div>
           </div>
-          <div id="players-list" class="players-list">
-            <span class="muted">Connecting...</span>
+          <div class="card-content">
+            <div id="players-list" class="players-list">
+              <span class="muted">Connecting...</span>
+            </div>
           </div>
         </section>
 

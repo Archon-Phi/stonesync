@@ -31,17 +31,45 @@
 /* --- Light Theme Support --- */
 body.light-theme {
   --bg-dark: #F1F5F9;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-card-hover: rgba(248, 250, 252, 0.95);
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8FAFC;
   --border-subtle: rgba(0, 0, 0, 0.12);
   --border-focus: rgba(245, 158, 11, 0.6);
   --text-main: #0F172A;
   --text-muted: #334155;
   --text-dim: #64748B;
   --shadow-card: 0 12px 32px -4px rgba(0, 0, 0, 0.08);
+  background-color: var(--bg-dark);
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
     radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.08) 0%, transparent 40%);
+  color: var(--text-main);
+}
+
+body.light-theme input[type="text"],
+body.light-theme input[type="number"],
+body.light-theme select,
+body.light-theme .clock-box,
+body.light-theme .cap-box,
+body.light-theme .chat-messages,
+body.light-theme .reactions-bar,
+body.light-theme .top-move-item {
+  background: #F8FAFC;
+  color: #0F172A;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme select option {
+  background: #FFFFFF;
+  color: #0F172A;
+}
+
+body.light-theme .ai-eval-card,
+body.light-theme .navbar,
+body.light-theme .card {
+  background: #FFFFFF;
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 /* --- Iconshock Icon Utilities (32px Standardized) --- */
@@ -572,6 +600,34 @@ canvas#go-board {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card.collapsed .card-header {
+  margin-bottom: 0;
+}
+
+.btn-card-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapse-chevron {
+  transition: transform 0.25s ease;
+}
+
+.card.collapsed .collapse-chevron {
+  transform: rotate(90deg);
+}
+
+.card.collapsed .card-content {
+  display: none !important;
 }
 
 .card-title {

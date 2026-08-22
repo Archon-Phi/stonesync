@@ -386,6 +386,21 @@
       } catch (err) {}
     }
 
+    const cardHeader = e.target.closest('.card-header');
+    if (cardHeader && !e.target.closest('#btn-edit-name')) {
+      const card = cardHeader.closest('.card');
+      if (card) {
+        card.classList.toggle('collapsed');
+      }
+    }
+
+    const btnTheme = e.target.closest('#btn-theme-toggle');
+    if (btnTheme) {
+      const nextMode = (currentDisplayMode === 'dark') ? 'light' : 'dark';
+      applyDisplayMode(nextMode);
+      showToast(`Switched to ${nextMode.toUpperCase()} Mode UI`, false);
+    }
+
     const btnZenAmbient = e.target.closest('#btn-zen-ambient');
     if (btnZenAmbient) {
       getAudioContext();
