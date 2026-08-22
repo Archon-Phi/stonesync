@@ -257,7 +257,6 @@
   }
 
 
-  let senseiHintsActive = false;
   let zenAmbientActive = false;
   let zenRainNode = null;
   let zenTimer = null;
@@ -272,6 +271,21 @@
         showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
         renderBoard();
       } catch (err) {}
+    }
+
+    const btnZenAmbient = e.target.closest('#btn-zen-ambient');
+    if (btnZenAmbient) {
+      getAudioContext();
+      preloadAudioAssets();
+      zenAmbientActive = !zenAmbientActive;
+      btnZenAmbient.classList.toggle('active', zenAmbientActive);
+      if (zenAmbientActive) {
+        startZenAmbientSoundscape();
+        showToast('🔊 Zen Ambient Soundscape Activated (Rain & Bamboo Fountain)', false);
+      } else {
+        stopZenAmbientSoundscape();
+        showToast('🔇 Zen Ambient Soundscape Muted', true);
+      }
     }
   });
 
@@ -374,25 +388,6 @@
 
   loadTrack(0);
   fetchAudioTracks();
-
-
-  if (btnZenAmbient) {
-
-    btnZenAmbient.addEventListener('click', () => {
-      getAudioContext();
-      preloadAudioAssets();
-      zenAmbientActive = !zenAmbientActive;
-
-      btnZenAmbient.classList.toggle('active', zenAmbientActive);
-      if (zenAmbientActive) {
-        startZenAmbientSoundscape();
-        showToast('🔊 Zen Ambient Soundscape Activated (Rain & Bamboo Fountain)', false);
-      } else {
-        stopZenAmbientSoundscape();
-        showToast('🔇 Zen Ambient Soundscape Muted', true);
-      }
-    });
-  }
 
   function startZenAmbientSoundscape() {
     try {
@@ -924,10 +919,13 @@
     }
   }
 
+  function columnLetter(c) {
+    // Standard Go notation skips I so it is not confused with 1.
+    return String.fromCharCode(65 + c + (c >= 8 ? 1 : 0));
+  }
+
   function toBoardCoords(r, c, size = 19) {
-    const colChar = c >= 8 ? String.fromCharCode(65 + c + 1) : String.fromCharCode(65 + c);
-    const rowNum = (size - r).toString();
-    return `${colChar}${rowNum}`;
+    return `${columnLetter(c)}${(size - r).toString()}`;
   }
 
   function updateAIEvaluationUI(evalData) {
@@ -1111,7 +1109,7 @@
 
   function updateLastMove(state) {
     if (state.last_move) {
-      const colLetter = String.fromCharCode(65 + state.last_move.c);
+      const colLetter = columnLetter(state.last_move.c);
       const rowNum = state.board_size - state.last_move.r;
       lastMoveText.textContent = `${colLetter}${rowNum} (Row ${state.last_move.r + 1}, Col ${state.last_move.c + 1})`;
     } else {
@@ -1335,7 +1333,7 @@
     ctx.textBaseline = 'middle';
 
     for (let i = 0; i < size; i++) {
-      const colChar = String.fromCharCode(65 + i);
+      const colChar = columnLetter(i);
       const rowNum = (size - i).toString();
 
       ctx.fillText(colChar, startX + i * cellSize, startY - 18);
