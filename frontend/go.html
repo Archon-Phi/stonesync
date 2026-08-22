@@ -387,10 +387,15 @@
 
         <!-- Connected Players List -->
         <section class="card players-card">
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Connected Players
-          </h2>
+          <div class="card-header" style="margin-bottom: 8px;">
+            <h2 class="card-title">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Connected Players
+            </h2>
+            <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
+              ✏️ Edit Name
+            </button>
+          </div>
           <div id="players-list" class="players-list">
             <span class="muted">Connecting...</span>
           </div>
@@ -398,6 +403,28 @@
 
       </aside>
     </main>
+
+    <!-- Player Name Prompt Overlay Modal -->
+    <div id="name-prompt-overlay" class="modal-overlay modal-hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Welcome to StoneSync! 🪨</h3>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 14px; color: var(--text-secondary); font-size: 0.9rem;">
+            Please enter your player display name before joining:
+          </p>
+          <form id="name-prompt-form">
+            <div class="form-group">
+              <input type="text" id="name-prompt-input" placeholder="e.g. GoMaster_99" maxlength="20" required autocomplete="off" style="width: 100%; padding: 10px; font-size: 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+            </div>
+            <button type="submit" id="btn-save-name" class="btn btn-primary btn-full" style="margin-top: 14px;">
+              Join Match 🚀
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- Game Over Overlay Modal -->
     <div id="game-over-overlay" class="modal-overlay modal-hidden">

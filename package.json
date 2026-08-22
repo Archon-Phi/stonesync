@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/Archon-Phi/stonesync#readme",
   "devDependencies": {
-    "@playwright/test": "^1.62.1"
+    "@playwright/test": "^1.62.1",
+    "prettier": "^3.9.6"
   }
 }

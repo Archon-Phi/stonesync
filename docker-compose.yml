@@ -23,3 +23,13 @@ services:
       - "traefik.http.routers.stonesync.tls=true"
       - "traefik.http.routers.stonesync.tls.certresolver=httpresolver"
       - "traefik.http.services.stonesync.loadbalancer.server.port=8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app/frontend
+        - action: sync+restart
+          path: ./server
+          target: /app/server
+        - action: rebuild
+          path: ./requirements.txt

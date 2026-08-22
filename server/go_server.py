@@ -39,6 +39,8 @@ class Room:
         byoyomi_time_sec: float = 30.0,
         fischer_increment_sec: float = 5.0
     ):
+        if board_size not in (9, 13, 19):
+            board_size = 19
         self.room_id = room_id
         self.is_solo = is_solo or is_debug
         self.is_ai = is_ai
@@ -55,6 +57,7 @@ class Room:
             fischer_increment_sec=fischer_increment_sec
         )
         self.players: Dict[str, str] = {}
+        self.player_names: Dict[str, str] = {}
         self.connections: Dict[WebSocket, str] = {}
         self.lock = asyncio.Lock()
         self.chat_history: list = []
@@ -62,16 +65,23 @@ class Room:
         self.is_paused: bool = False
         self.password: Optional[str] = None
         self.is_private: bool = False
-
+        self._cached_eval: Optional[dict] = None
+        self._cached_eval_move_count: int = -1
 
         if self.is_ai:
             self.players["bot_stonebot"] = "W"
+            self.player_names["bot_stonebot"] = "StoneBot (AI)"
             self.bot = StoneBot(color="W", difficulty="tactical")
         else:
             self.bot = None
 
-    def register_player(self, player_id: str, preferred_color: Optional[str] = None) -> str:
+    def register_player(self, player_id: str, preferred_color: Optional[str] = None, name: Optional[str] = None) -> str:
         """Assign role ('B', 'W', or 'observer') to player_id, swapping roles if necessary."""
+        if name:
+            self.player_names[player_id] = name
+        elif player_id not in self.player_names:
+            self.player_names[player_id] = player_id[:6]
+
         if not self.host_id:
             self.host_id = player_id
 
@@ -110,13 +120,12 @@ class Room:
         else:
             return 'observer'
 
-
-
     def get_players_info(self) -> list:
         return [
             {
                 "player_id": pid,
-                "short_id": "StoneBot" if pid == "bot_stonebot" else pid[:6],
+                "short_id": self.player_names.get(pid) or ("StoneBot" if pid == "bot_stonebot" else pid[:6]),
+                "name": self.player_names.get(pid) or ("StoneBot" if pid == "bot_stonebot" else pid[:6]),
                 "color": color,
                 "is_bot": pid == "bot_stonebot"
             }
@@ -124,6 +133,11 @@ class Room:
         ]
 
     def get_state_payload(self) -> dict:
+        move_count = len(self.game.history)
+        if self._cached_eval is None or self._cached_eval_move_count != move_count:
+            self._cached_eval = evaluate_game(self.game)
+            self._cached_eval_move_count = move_count
+
         return {
             "type": "state",
             "room_id": self.room_id,
@@ -133,7 +147,7 @@ class Room:
             "game_state": self.game.to_dict(now_ts=time.time()),
             "players": self.get_players_info(),
             "chat_history": self.chat_history[-50:],
-            "ai_evaluation": evaluate_game(self.game)
+            "ai_evaluation": self._cached_eval
         }
 
 
@@ -217,6 +231,7 @@ class RoomManager:
         websocket: WebSocket,
         room_id: str,
         player_id: str,
+        player_name: Optional[str] = None,
         board_size: int = 19,
         komi: Optional[float] = None,
         handicap: int = 0,
@@ -252,10 +267,11 @@ class RoomManager:
             room.is_ai = True
             if "bot_stonebot" not in room.players:
                 room.players["bot_stonebot"] = "W"
+                room.player_names["bot_stonebot"] = "StoneBot (AI)"
                 room.bot = StoneBot(color="W", difficulty="tactical")
 
         async with room.lock:
-            role = room.register_player(player_id)
+            role = room.register_player(player_id, name=player_name)
             room.connections[websocket] = player_id
             
         sync_payload = room.get_state_payload()
@@ -428,14 +444,21 @@ class RoomManager:
                     except ValueError:
                         pass
 
+            elif action == "set_name":
+                new_name = str(data.get("name", "")).strip()
+                if new_name:
+                    room.player_names[player_id] = new_name
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "set_name", "player_id": player_id, "name": new_name}
+                    await room.broadcast(state)
+
             elif action == "chat":
-
-
                 msg_text = str(data.get("text", "")).strip()
                 if msg_text:
+                    display_name = room.player_names.get(player_id) or player_id[:6]
                     chat_item = {
                         "player_id": player_id,
-                        "short_id": player_id[:6],
+                        "short_id": display_name,
                         "role": role,
                         "text": msg_text,
                         "timestamp": time.strftime("%H:%M:%S")

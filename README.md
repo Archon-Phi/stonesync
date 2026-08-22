@@ -100,8 +100,17 @@ uvicorn server.app:app --host 0.0.0.0 --port 8080
 # Build and launch StoneSync in detached mode
 docker compose up --build -d
 
+# Live File Development with Docker Compose Watch
+docker compose watch
+
 # Open in browser: http://localhost:8080/go
 ```
+
+#### ⚡ Docker Compose Watch Hot-Reloading (`docker-compose.yml`)
+The `develop.watch` section enables automated live development:
+- **Frontend Changes (`./frontend`)**: Real-time sync to `/app/frontend` (no container restart required).
+- **Server Engine Changes (`./server`)**: Real-time sync to `/app/server` with automatic Uvicorn app server restart.
+- **Python Dependencies (`./requirements.txt`)**: Triggers an automated container image rebuild.
 
 ---
 

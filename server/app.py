@@ -4,6 +4,7 @@ Serves static frontend assets, main UI route /go (and / redirect), and WebSocket
 """
 import os
 from pathlib import Path
+from typing import Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -80,6 +81,7 @@ async def websocket_go_endpoint(
     websocket: WebSocket,
     room_id: str,
     player_id: str = Query(...),
+    player_name: str = Query(""),
     board_size: int = Query(19),
     komi: float = Query(6.5),
     handicap: int = Query(0),
@@ -98,6 +100,7 @@ async def websocket_go_endpoint(
         websocket,
         room_id,
         player_id,
+        player_name=player_name,
         board_size=board_size,
         komi=komi,
         handicap=handicap,
@@ -109,7 +112,6 @@ async def websocket_go_endpoint(
         byoyomi_periods=byoyomi_periods,
         byoyomi_time_sec=byoyomi_time_sec,
         fischer_increment_sec=fischer_increment_sec
-
     )
 
 

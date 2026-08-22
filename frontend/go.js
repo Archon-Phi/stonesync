@@ -16,6 +16,26 @@
     return pid;
   }
 
+  function getPlayerName() {
+    return localStorage.getItem('stonesync_player_name') || '';
+  }
+
+  function setPlayerName(name) {
+    if (name) {
+      localStorage.setItem('stonesync_player_name', name.trim());
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   const playerId = getOrCreatePlayerId();
   let socket = null;
   let currentGameState = null;
@@ -107,6 +127,51 @@
   const komiDisplay = document.getElementById('komi-display');
   const btnModalReset = document.getElementById('btn-modal-reset');
   const btnModalClose = document.getElementById('btn-modal-close');
+
+  // Name Prompt Modal Elements
+  const namePromptOverlay = document.getElementById('name-prompt-overlay');
+  const namePromptForm = document.getElementById('name-prompt-form');
+  const namePromptInput = document.getElementById('name-prompt-input');
+  const btnEditName = document.getElementById('btn-edit-name');
+
+  function showNamePromptModal() {
+    if (!namePromptOverlay) return;
+    const currentName = getPlayerName();
+    if (namePromptInput) namePromptInput.value = currentName;
+    namePromptOverlay.classList.remove('modal-hidden');
+    setTimeout(() => { if (namePromptInput) namePromptInput.focus(); }, 100);
+  }
+
+  function hideNamePromptModal() {
+    if (namePromptOverlay) namePromptOverlay.classList.add('modal-hidden');
+  }
+
+  if (namePromptForm) {
+    namePromptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = namePromptInput ? namePromptInput.value.trim() : '';
+      if (val) {
+        setPlayerName(val);
+        hideNamePromptModal();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ action: 'set_name', name: val }));
+        } else if (socket && socket.readyState === WebSocket.CONNECTING) {
+          socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({ action: 'set_name', name: val }));
+          }, { once: true });
+        } else {
+          connectWebSocket();
+        }
+        showToast(`Welcome, ${val}!`, false);
+      }
+    });
+  }
+
+  if (btnEditName) {
+    btnEditName.addEventListener('click', () => {
+      showNamePromptModal();
+    });
+  }
 
   // --- 4. Spatial Audio Engine ---
   let audioContext = null;
@@ -716,7 +781,8 @@
     const host = window.location.host || '127.0.0.1:8080';
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const mainTimeSec = currentMainTimeMin * 60;
-    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
+    const playerName = getPlayerName();
+    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&player_name=${encodeURIComponent(playerName)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
 
     try {
       socket = new WebSocket(wsUrl);
@@ -728,6 +794,10 @@
 
     socket.onopen = () => {
       console.log('Connected to StoneSync Room:', currentRoomId);
+      const name = getPlayerName();
+      if (name) {
+        socket.send(JSON.stringify({ action: 'set_name', name: name }));
+      }
     };
 
     socket.onmessage = (event) => {
@@ -1061,7 +1131,8 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   function updateRoleBadge() {
@@ -1125,6 +1196,7 @@
 
     playersListEl.innerHTML = players.map(p => {
       const isMe = p.player_id === playerId;
+      const displayName = p.name || p.short_id || (p.player_id ? p.player_id.substring(0, 6) : 'Player');
       let colorTag = '<span class="badge role-observer">Observer</span>';
       if (p.color === 'B') colorTag = '<span class="badge role-black"><span class="stone-icon stone-black"></span> Black</span>';
       if (p.color === 'W') colorTag = '<span class="badge role-white"><span class="stone-icon stone-white"></span> White</span>';
@@ -1132,7 +1204,7 @@
       return `
         <div class="player-item">
           <div class="player-info">
-            <span class="mono">${p.short_id}</span>
+            <span class="mono">${escapeHtml(displayName)}</span>
             ${isMe ? '<span class="player-you-tag">YOU</span>' : ''}
           </div>
           ${colorTag}
@@ -1722,6 +1794,9 @@
   // --- 12. Initialization ---
   updateUrlAndControls();
   connectWebSocket();
+  if (!getPlayerName()) {
+    showNamePromptModal();
+  }
   setTimeout(resizeCanvas, 50);
 
 })();
