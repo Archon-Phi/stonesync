@@ -262,18 +262,18 @@
   let zenRainNode = null;
   let zenTimer = null;
 
-  const btnSenseiHints = document.getElementById('btn-sensei-hints');
-  const btnZenAmbient = document.getElementById('btn-zen-ambient');
-
-  if (btnSenseiHints) {
-    btnSenseiHints.addEventListener('click', () => {
-      getAudioContext();
+  document.addEventListener('click', (e) => {
+    const btnSensei = e.target.closest('#btn-sensei-hints');
+    if (btnSensei) {
+      try { getAudioContext(); } catch (err) {}
       senseiHintsActive = !senseiHintsActive;
-      btnSenseiHints.classList.toggle('active', senseiHintsActive);
-      showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
-      renderBoard();
-    });
-  }
+      btnSensei.classList.toggle('active', senseiHintsActive);
+      try {
+        showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
+        renderBoard();
+      } catch (err) {}
+    }
+  });
 
   let mp3Playlist = [
     { title: "🎵 Binary Stream", src: "./music/Binary_Stream.mp3" },

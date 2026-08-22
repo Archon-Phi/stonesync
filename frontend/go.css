@@ -145,6 +145,14 @@ body {
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
+#btn-sensei-hints.active,
+.btn-accent.active {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.35), rgba(202, 138, 4, 0.55)) !important;
+  color: #fef08a !important;
+  border-color: #eab308 !important;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.4) !important;
+}
+
 /* Top Bar MP3 Player Widget */
 .mp3-player-widget {
   display: flex;
