@@ -281,10 +281,17 @@ body {
 /* --- Layout Grid --- */
 .main-layout {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 340px 1fr 380px;
   gap: 20px;
   flex: 1;
   width: 100%;
+}
+
+@media (max-width: 1360px) {
+  .main-layout {
+    grid-template-columns: 300px 1fr 340px;
+    gap: 14px;
+  }
 }
 
 @media (max-width: 1024px) {

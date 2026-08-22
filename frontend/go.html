@@ -100,7 +100,68 @@
     <!-- Main Content Area -->
     <main class="main-layout">
 
-      <!-- Left / Primary Center Column: Go Board & Primary Action Bar -->
+      <!-- Left Column: Chat & Connected Players Sidebar -->
+      <aside class="sidebar-section left-sidebar">
+
+        <!-- Room Chat & Reactions Panel -->
+        <section class="card chat-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <img src="/static/assets/icons/iconshock/chat.svg" class="icon-sm" alt="Chat">
+              Room Chat
+            </h2>
+            <button type="button" class="btn-card-toggle" title="Toggle Panel">
+              <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+            </button>
+          </div>
+          
+          <div class="card-content">
+            <div class="reactions-bar">
+              <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
+              <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
+              <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
+              <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
+              <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
+              <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
+            </div>
+
+            <div id="chat-messages" class="chat-messages">
+              <span class="muted">Welcome to room chat!</span>
+            </div>
+
+            <form id="chat-form" class="chat-form">
+              <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
+              <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Connected Players List Panel -->
+        <section class="card players-card">
+          <div class="card-header" style="margin-bottom: 8px;">
+            <h2 class="card-title">
+              <img src="/static/assets/icons/iconshock/users.svg" class="icon-sm" alt="Users">
+              Connected Players
+            </h2>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
+                <img src="/static/assets/icons/iconshock/pencil.svg" class="icon-sm" alt="Edit"> Edit Name
+              </button>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <div id="players-list" class="players-list">
+              <span class="muted">Connecting...</span>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- Center Column: Go Board & Primary Action Bar -->
       <section class="board-section">
         <div class="board-container">
           <div id="toast-banner" class="toast toast-hidden"></div>
@@ -408,63 +469,6 @@
                 <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
                 <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
               </div>
-            </div>
-          </div>
-        </section>
-
-
-        <!-- Room Chat & Reactions Panel -->
-        <section class="card chat-card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <img src="/static/assets/icons/iconshock/chat.svg" class="icon-sm" alt="Chat">
-              Room Chat
-            </h2>
-            <button type="button" class="btn-card-toggle" title="Toggle Panel">
-              <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
-            </button>
-          </div>
-          
-          <div class="card-content">
-            <div class="reactions-bar">
-              <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
-              <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
-              <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
-              <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
-              <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
-              <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
-            </div>
-
-            <div id="chat-messages" class="chat-messages">
-              <span class="muted">Welcome to room chat!</span>
-            </div>
-
-            <form id="chat-form" class="chat-form">
-              <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
-              <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
-            </form>
-          </div>
-        </section>
-
-        <!-- Connected Players List -->
-        <section class="card players-card">
-          <div class="card-header" style="margin-bottom: 8px;">
-            <h2 class="card-title">
-              <img src="/static/assets/icons/iconshock/users.svg" class="icon-sm" alt="Users">
-              Connected Players
-            </h2>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
-                <img src="/static/assets/icons/iconshock/pencil.svg" class="icon-sm" alt="Edit"> Edit Name
-              </button>
-              <button type="button" class="btn-card-toggle" title="Toggle Panel">
-                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
-              </button>
-            </div>
-          </div>
-          <div class="card-content">
-            <div id="players-list" class="players-list">
-              <span class="muted">Connecting...</span>
             </div>
           </div>
         </section>
