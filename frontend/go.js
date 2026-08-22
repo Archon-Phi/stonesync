@@ -62,6 +62,7 @@
   let currentMainTimeMin = parseInt(urlParams.get('main_time') || '10', 10);
   let currentByoPeriods = parseInt(urlParams.get('byo_p') || '3', 10);
   let currentByoTimeSec = parseInt(urlParams.get('byo_t') || '30', 10);
+  let currentAiDifficulty = urlParams.get('ai_difficulty') || 'medium';
 
   if (![9, 13, 19].includes(currentBoardSize)) {
     currentBoardSize = 19;
@@ -70,6 +71,8 @@
   // --- 3. DOM Elements ---
   const roomInput = document.getElementById('room-input');
   const modeSelect = document.getElementById('mode-select');
+  const aiDifficultyGroup = document.getElementById('ai-difficulty-group');
+  const aiDifficultySelect = document.getElementById('ai-difficulty-select');
   const boardSizeSelect = document.getElementById('board-size-select');
   const handicapSelect = document.getElementById('handicap-select');
   const komiInput = document.getElementById('komi-input');
@@ -256,6 +259,32 @@
   }
 
   // --- 5. Theme & Controls Sync ---
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  const themeToggleLabel = document.getElementById('theme-toggle-label');
+  let currentDisplayMode = localStorage.getItem('stonesync_mode') || 'dark';
+
+  function applyDisplayMode(mode) {
+    currentDisplayMode = mode;
+    localStorage.setItem('stonesync_mode', mode);
+    if (mode === 'light') {
+      document.body.classList.add('light-theme');
+      if (themeToggleLabel) themeToggleLabel.textContent = 'Light Mode';
+    } else {
+      document.body.classList.remove('light-theme');
+      if (themeToggleLabel) themeToggleLabel.textContent = 'Dark Mode';
+    }
+  }
+
+  applyDisplayMode(currentDisplayMode);
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener('click', () => {
+      const nextMode = (currentDisplayMode === 'dark') ? 'light' : 'dark';
+      applyDisplayMode(nextMode);
+      showToast(`Switched to ${nextMode.toUpperCase()} Mode UI`, false);
+    });
+  }
+
   function applyTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('stonesync_theme', theme);
@@ -282,6 +311,13 @@
     renderBoard();
   });
 
+  function syncModeFieldsVisibility() {
+    const selectedMode = modeSelect ? modeSelect.value : currentMode;
+    if (aiDifficultyGroup) {
+      aiDifficultyGroup.style.display = (selectedMode === 'ai') ? 'block' : 'none';
+    }
+  }
+
   function syncTcFieldsVisibility() {
     const val = tcSelect.value;
     if (val === 'none') {
@@ -296,10 +332,20 @@
     }
   }
 
+  if (modeSelect) {
+    modeSelect.value = currentMode;
+    syncModeFieldsVisibility();
+    modeSelect.addEventListener('change', syncModeFieldsVisibility);
+  }
+
   if (tcSelect) {
     tcSelect.value = currentTc;
     syncTcFieldsVisibility();
     tcSelect.addEventListener('change', syncTcFieldsVisibility);
+  }
+
+  if (aiDifficultySelect) {
+    aiDifficultySelect.value = currentAiDifficulty;
   }
 
   function updateUrlAndControls() {
@@ -307,6 +353,7 @@
     const navRoomId = document.getElementById('nav-room-id');
     if (navRoomId) navRoomId.textContent = currentRoomId;
     if (modeSelect) modeSelect.value = currentMode;
+    if (aiDifficultySelect) aiDifficultySelect.value = currentAiDifficulty;
     boardSizeSelect.value = currentBoardSize.toString();
     if (handicapSelect) handicapSelect.value = currentHandicap.toString();
     komiInput.value = currentKomi.toString();
@@ -315,8 +362,9 @@
     if (mainTimeInput) mainTimeInput.value = currentMainTimeMin.toString();
     if (byoyomiPeriodsInput) byoyomiPeriodsInput.value = currentByoPeriods.toString();
     syncTcFieldsVisibility();
+    syncModeFieldsVisibility();
 
-    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&tc=${currentTc}&main_time=${currentMainTimeMin}&byo_p=${currentByoPeriods}`;
+    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&ai_difficulty=${encodeURIComponent(currentAiDifficulty)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&tc=${currentTc}&main_time=${currentMainTimeMin}&byo_p=${currentByoPeriods}`;
     shareUrlInput.value = fullUrl;
     window.history.replaceState({}, '', fullUrl);
   }
@@ -788,7 +836,7 @@
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const mainTimeSec = currentMainTimeMin * 60;
     const playerName = getPlayerName();
-    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&player_name=${encodeURIComponent(playerName)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
+    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&player_name=${encodeURIComponent(playerName)}&mode=${currentMode}&ai_difficulty=${encodeURIComponent(currentAiDifficulty)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
 
     try {
       socket = new WebSocket(wsUrl);

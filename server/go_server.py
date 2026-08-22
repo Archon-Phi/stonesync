@@ -37,7 +37,8 @@ class Room:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ):
         if board_size not in (9, 13, 19):
             board_size = 19
@@ -45,6 +46,7 @@ class Room:
         self.is_solo = is_solo or is_debug
         self.is_ai = is_ai
         self.is_debug = is_debug
+        self.ai_difficulty = ai_difficulty.lower()
 
         self.game = GoGame(
             board_size=board_size,
@@ -70,8 +72,8 @@ class Room:
 
         if self.is_ai:
             self.players["bot_stonebot"] = "W"
-            self.player_names["bot_stonebot"] = "StoneBot (AI)"
-            self.bot = StoneBot(color="W", difficulty="tactical")
+            self.player_names["bot_stonebot"] = f"StoneBot ({self.ai_difficulty.capitalize()})"
+            self.bot = StoneBot(color="W", difficulty=self.ai_difficulty)
         else:
             self.bot = None
 
@@ -144,6 +146,7 @@ class Room:
             "host_id": self.host_id,
             "is_paused": self.is_paused,
             "is_private": self.is_private,
+            "ai_difficulty": self.ai_difficulty,
             "game_state": self.game.to_dict(now_ts=time.time()),
             "players": self.get_players_info(),
             "chat_history": self.chat_history[-50:],
@@ -207,7 +210,8 @@ class RoomManager:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ) -> Room:
         if room_id not in self.rooms:
             self.rooms[room_id] = Room(
@@ -222,8 +226,16 @@ class RoomManager:
                 main_time_sec=main_time_sec,
                 byoyomi_periods=byoyomi_periods,
                 byoyomi_time_sec=byoyomi_time_sec,
-                fischer_increment_sec=fischer_increment_sec
+                fischer_increment_sec=fischer_increment_sec,
+                ai_difficulty=ai_difficulty
             )
+        else:
+            room = self.rooms[room_id]
+            if ai_difficulty:
+                room.ai_difficulty = ai_difficulty.lower()
+                if room.bot:
+                    room.bot.difficulty = room.ai_difficulty
+                    room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
         return self.rooms[room_id]
 
     async def connect_client(
@@ -242,7 +254,8 @@ class RoomManager:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ) -> Tuple[Room, str]:
         await websocket.accept()
         room = self.get_or_create_room(
@@ -257,7 +270,8 @@ class RoomManager:
             main_time_sec=main_time_sec,
             byoyomi_periods=byoyomi_periods,
             byoyomi_time_sec=byoyomi_time_sec,
-            fischer_increment_sec=fischer_increment_sec
+            fischer_increment_sec=fischer_increment_sec,
+            ai_difficulty=ai_difficulty
         )
         if is_solo or is_debug:
             room.is_solo = True
@@ -265,10 +279,14 @@ class RoomManager:
             room.is_debug = True
         if is_ai:
             room.is_ai = True
+            room.ai_difficulty = ai_difficulty.lower()
             if "bot_stonebot" not in room.players:
                 room.players["bot_stonebot"] = "W"
-                room.player_names["bot_stonebot"] = "StoneBot (AI)"
-                room.bot = StoneBot(color="W", difficulty="tactical")
+                room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
+                room.bot = StoneBot(color="W", difficulty=room.ai_difficulty)
+            elif room.bot:
+                room.bot.difficulty = room.ai_difficulty
+                room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
 
         async with room.lock:
             role = room.register_player(player_id, name=player_name)

@@ -78,6 +78,11 @@
           <img src="/static/assets/icons/iconshock/volume.svg" class="icon-sm" alt="Volume"> Zen Ambient
         </button>
 
+        <button type="button" id="btn-theme-toggle" class="btn btn-sm btn-ghost" title="Toggle Light / Dark Mode">
+          <img id="theme-toggle-icon" src="/static/assets/icons/iconshock/settings.svg" class="icon-sm" alt="Theme">
+          <span id="theme-toggle-label">Dark Mode</span>
+        </button>
+
         <button type="button" id="btn-export-sgf" class="btn btn-sm btn-ghost" title="Export SGF Game Record">
           <img src="/static/assets/icons/iconshock/export.svg" class="icon-sm" alt="Export">
           SGF
@@ -245,7 +250,15 @@
                     <option value="solo">Pass &amp; Play</option>
                     <option value="debug">Debug Sandbox (Both Sides)</option>
                   </select>
-
+                </div>
+                <div class="form-group" id="ai-difficulty-group" style="display: none;">
+                  <label for="ai-difficulty-select">AI Difficulty</label>
+                  <select id="ai-difficulty-select">
+                    <option value="easy">Easy (Beginner)</option>
+                    <option value="medium" selected>Medium (Intermediate)</option>
+                    <option value="hard">Hard (Dan Level)</option>
+                    <option value="master">Master (Sensei AI)</option>
+                  </select>
                 </div>
               </div>
 

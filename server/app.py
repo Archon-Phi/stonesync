@@ -90,7 +90,8 @@ async def websocket_go_endpoint(
     main_time_sec: float = Query(600.0),
     byoyomi_periods: int = Query(3),
     byoyomi_time_sec: float = Query(30.0),
-    fischer_increment_sec: float = Query(5.0)
+    fischer_increment_sec: float = Query(5.0),
+    ai_difficulty: str = Query("medium")
 ):
 
     is_solo = (mode in ("solo", "debug"))
@@ -111,7 +112,8 @@ async def websocket_go_endpoint(
         main_time_sec=main_time_sec,
         byoyomi_periods=byoyomi_periods,
         byoyomi_time_sec=byoyomi_time_sec,
-        fischer_increment_sec=fischer_increment_sec
+        fischer_increment_sec=fischer_increment_sec,
+        ai_difficulty=ai_difficulty
     )
 
 
