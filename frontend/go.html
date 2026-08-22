@@ -30,49 +30,67 @@
         </div>
 
         <div class="side-switcher" id="nav-side-switcher">
-          <button type="button" class="btn-side side-btn-b active" data-color="B" title="Switch to Black">⚫ Black</button>
-          <button type="button" class="btn-side side-btn-w" data-color="W" title="Switch to White">⚪ White</button>
-          <button type="button" class="btn-side side-btn-both" data-color="both" title="Play Both Sides (Debug Sandbox)">🛠️ Both</button>
+          <button type="button" class="btn-side side-btn-b active" data-color="B" title="Switch to Black">
+            <img src="/static/assets/icons/iconshock/black-stone.svg" class="icon-sm" alt="Black"> Black
+          </button>
+          <button type="button" class="btn-side side-btn-w" data-color="W" title="Switch to White">
+            <img src="/static/assets/icons/iconshock/white-stone.svg" class="icon-sm" alt="White"> White
+          </button>
+          <button type="button" class="btn-side side-btn-both" data-color="both" title="Play Both Sides (Debug Sandbox)">
+            <img src="/static/assets/icons/iconshock/sandbox.svg" class="icon-sm" alt="Both"> Both
+          </button>
         </div>
 
         <div class="theme-picker">
           <select id="theme-select" title="Board Theme">
-            <option value="kaya" selected>🪵 Kaya Wood</option>
-            <option value="obsidian">💎 Obsidian</option>
-            <option value="cyberpunk">⚡ Cyberpunk</option>
+            <option value="kaya" selected>Kaya Wood</option>
+            <option value="obsidian">Obsidian</option>
+            <option value="cyberpunk">Cyberpunk</option>
           </select>
         </div>
 
 
         <!-- Top Bar MP3 Audio Player -->
         <div class="mp3-player-widget" id="mp3-player-widget">
-          <button type="button" id="btn-mp3-prev" class="btn-mp3-ctrl" title="Previous Track">⏮️</button>
-          <button type="button" id="btn-mp3-play" class="btn-mp3-ctrl btn-mp3-play" title="Play / Pause">▶️</button>
-          <button type="button" id="btn-mp3-next" class="btn-mp3-ctrl" title="Next Track">⏭️</button>
+          <button type="button" id="btn-mp3-prev" class="btn-mp3-ctrl" title="Previous Track">
+            <img src="/static/assets/icons/iconshock/prev.svg" class="icon-xs" alt="Prev">
+          </button>
+          <button type="button" id="btn-mp3-play" class="btn-mp3-ctrl btn-mp3-play" title="Play / Pause">
+            <img src="/static/assets/icons/iconshock/play.svg" class="icon-xs" alt="Play">
+          </button>
+          <button type="button" id="btn-mp3-next" class="btn-mp3-ctrl" title="Next Track">
+            <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs" alt="Next">
+          </button>
           <div class="mp3-track-info">
-            <span id="mp3-track-title" class="mp3-title">🎵 Zen Garden Ambient</span>
+            <span id="mp3-track-title" class="mp3-title">
+              <img src="/static/assets/icons/iconshock/music.svg" class="icon-xs" alt="Music"> Zen Garden Ambient
+            </span>
             <span id="mp3-track-time" class="mp3-time mono">0:00 / 0:00</span>
           </div>
           <audio id="mp3-audio-element" preload="metadata"></audio>
         </div>
 
         <button type="button" id="btn-sensei-hints" class="btn btn-sm btn-accent" title="AI Sensei Move Evaluator">
-
-          💡 Sensei Hints
+          <img src="/static/assets/icons/iconshock/bulb.svg" class="icon-sm" alt="Sensei"> Sensei Hints
         </button>
 
         <button type="button" id="btn-zen-ambient" class="btn btn-sm btn-ghost" title="Toggle Zen Ambient Soundscape">
-          🔊 Zen Ambient
+          <img src="/static/assets/icons/iconshock/volume.svg" class="icon-sm" alt="Volume"> Zen Ambient
+        </button>
+
+        <button type="button" id="btn-theme-toggle" class="btn btn-sm btn-ghost" title="Toggle Light / Dark Mode">
+          <img id="theme-toggle-icon" src="/static/assets/icons/iconshock/settings.svg" class="icon-sm" alt="Theme">
+          <span id="theme-toggle-label">Dark Mode</span>
         </button>
 
         <button type="button" id="btn-export-sgf" class="btn btn-sm btn-ghost" title="Export SGF Game Record">
-          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <img src="/static/assets/icons/iconshock/export.svg" class="icon-sm" alt="Export">
           SGF
         </button>
 
 
         <label for="input-import-sgf" class="btn btn-sm btn-ghost" title="Import SGF File" style="margin: 0; cursor: pointer;">
-          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <img src="/static/assets/icons/iconshock/import.svg" class="icon-sm" alt="Import">
           Import
           <input type="file" id="input-import-sgf" accept=".sgf" style="display: none;">
         </label>
@@ -82,7 +100,68 @@
     <!-- Main Content Area -->
     <main class="main-layout">
 
-      <!-- Left / Primary Center Column: Go Board & Primary Action Bar -->
+      <!-- Left Column: Chat & Connected Players Sidebar -->
+      <aside class="sidebar-section left-sidebar">
+
+        <!-- Room Chat & Reactions Panel -->
+        <section class="card chat-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <img src="/static/assets/icons/iconshock/chat.svg" class="icon-sm" alt="Chat">
+              Room Chat
+            </h2>
+            <button type="button" class="btn-card-toggle" title="Toggle Panel">
+              <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+            </button>
+          </div>
+          
+          <div class="card-content">
+            <div class="reactions-bar">
+              <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
+              <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
+              <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
+              <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
+              <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
+              <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
+            </div>
+
+            <div id="chat-messages" class="chat-messages">
+              <span class="muted">Welcome to room chat!</span>
+            </div>
+
+            <form id="chat-form" class="chat-form">
+              <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
+              <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Connected Players List Panel -->
+        <section class="card players-card">
+          <div class="card-header" style="margin-bottom: 8px;">
+            <h2 class="card-title">
+              <img src="/static/assets/icons/iconshock/users.svg" class="icon-sm" alt="Users">
+              Connected Players
+            </h2>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-edit-name" class="btn btn-ghost btn-sm" title="Edit your display name" style="font-size: 0.75rem; padding: 2px 8px;">
+                <img src="/static/assets/icons/iconshock/pencil.svg" class="icon-sm" alt="Edit"> Edit Name
+              </button>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <div id="players-list" class="players-list">
+              <span class="muted">Connecting...</span>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- Center Column: Go Board & Primary Action Bar -->
       <section class="board-section">
         <div class="board-container">
           <div id="toast-banner" class="toast toast-hidden"></div>
@@ -95,19 +174,19 @@
           <!-- Primary In-Game Action Bar -->
           <div class="board-actions">
             <button id="btn-pass" class="btn btn-action btn-pass" disabled>
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <img src="/static/assets/icons/iconshock/pass.svg" class="icon-sm" alt="Pass">
               Pass Turn
             </button>
             <button id="btn-heatmap" class="btn btn-action btn-secondary">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z"></path></svg>
+              <img src="/static/assets/icons/iconshock/heatmap.svg" class="icon-sm" alt="Heatmap">
               Heatmap
             </button>
             <button id="btn-resign" class="btn btn-action btn-danger" disabled>
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+              <img src="/static/assets/icons/iconshock/flag.svg" class="icon-sm" alt="Resign">
               Resign
             </button>
             <button id="btn-reset" class="btn btn-action btn-reset">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              <img src="/static/assets/icons/iconshock/sandbox.svg" class="icon-sm" alt="Reset">
               New Match
             </button>
           </div>
@@ -121,29 +200,36 @@
         <section class="card ai-eval-card" id="ai-eval-card">
           <div class="card-header">
             <h2 class="card-title">
-              <svg class="icon text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <img src="/static/assets/icons/iconshock/stats.svg" class="icon-sm" alt="Stats">
               Sensei Positional Eval
             </h2>
-            <span id="score-lead-badge" class="badge role-badge role-black">B +0.5 pts</span>
-          </div>
-
-          <!-- Win-Rate Split Bar -->
-          <div class="win-rate-container">
-            <div class="win-rate-labels">
-              <span class="win-rate-label b-label" id="wr-black-text">Black 50.0%</span>
-              <span class="win-rate-label w-label" id="wr-white-text">White 50.0%</span>
-            </div>
-            <div class="win-rate-bar-track">
-              <div class="win-rate-bar-fill-b" id="wr-bar-fill-b" style="width: 50%;"></div>
-              <div class="win-rate-bar-fill-w" id="wr-bar-fill-w" style="width: 50%;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="score-lead-badge" class="badge role-badge role-black">B +0.5 pts</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
             </div>
           </div>
 
-          <!-- Top Tactical Move Recommendations -->
-          <div class="top-moves-panel" id="top-moves-panel">
-            <span class="top-moves-title">Top Recommended Moves</span>
-            <div class="top-moves-list" id="top-moves-list">
-              <div class="top-move-item empty-state">Calculating tactical move evaluation...</div>
+          <div class="card-content">
+            <!-- Win-Rate Split Bar -->
+            <div class="win-rate-container">
+              <div class="win-rate-labels">
+                <span class="win-rate-label b-label" id="wr-black-text">Black 50.0%</span>
+                <span class="win-rate-label w-label" id="wr-white-text">White 50.0%</span>
+              </div>
+              <div class="win-rate-bar-track">
+                <div class="win-rate-bar-fill-b" id="wr-bar-fill-b" style="width: 50%;"></div>
+                <div class="win-rate-bar-fill-w" id="wr-bar-fill-w" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <!-- Top Tactical Move Recommendations -->
+            <div class="top-moves-panel" id="top-moves-panel">
+              <span class="top-moves-title">Top Recommended Moves</span>
+              <div class="top-moves-list" id="top-moves-list">
+                <div class="top-move-item empty-state">Calculating tactical move evaluation...</div>
+              </div>
             </div>
           </div>
         </section>
@@ -152,60 +238,67 @@
         <section class="card match-card">
           <div class="card-header">
             <h2 class="card-title">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <img src="/static/assets/icons/iconshock/timer.svg" class="icon-sm" alt="Timer">
               Live Match Clocks
             </h2>
-            <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="player-role-badge" class="badge role-badge role-observer">Connecting...</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
+            </div>
           </div>
 
-          <!-- Digital Clocks -->
-          <div class="clocks-container" id="clocks-container" style="display: none;">
-            <div class="clock-box" id="clock-box-black">
-              <div class="clock-player">
-                <span class="stone-icon stone-black"></span>
-                <span>Black</span>
+          <div class="card-content">
+            <!-- Digital Clocks -->
+            <div class="clocks-container" id="clocks-container" style="display: none;">
+              <div class="clock-box" id="clock-box-black">
+                <div class="clock-player">
+                  <span class="stone-icon stone-black"></span>
+                  <span>Black</span>
+                </div>
+                <span class="clock-time mono" id="clock-time-black">10:00</span>
+                <span class="clock-sub" id="clock-sub-black"></span>
               </div>
-              <span class="clock-time mono" id="clock-time-black">10:00</span>
-              <span class="clock-sub" id="clock-sub-black"></span>
-            </div>
 
-            <div class="clock-box" id="clock-box-white">
-              <div class="clock-player">
-                <span class="stone-icon stone-white"></span>
-                <span>White</span>
+              <div class="clock-box" id="clock-box-white">
+                <div class="clock-player">
+                  <span class="stone-icon stone-white"></span>
+                  <span>White</span>
+                </div>
+                <span class="clock-time mono" id="clock-time-white">10:00</span>
+                <span class="clock-sub" id="clock-sub-white"></span>
               </div>
-              <span class="clock-time mono" id="clock-time-white">10:00</span>
-              <span class="clock-sub" id="clock-sub-white"></span>
             </div>
-          </div>
 
-          <!-- Match Telemetry Grid -->
-          <div class="telemetry-grid">
-            <div class="telemetry-item">
-              <span class="telemetry-label">Current Turn</span>
-              <span id="turn-indicator" class="badge turn-badge turn-black">
-                <span class="stone-icon stone-black"></span> Black
-              </span>
+            <!-- Match Telemetry Grid -->
+            <div class="telemetry-grid">
+              <div class="telemetry-item">
+                <span class="telemetry-label">Current Turn</span>
+                <span id="turn-indicator" class="badge turn-badge turn-black">
+                  <span class="stone-icon stone-black"></span> Black
+                </span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Passes</span>
+                <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
+              </div>
+              <div class="telemetry-item">
+                <span class="telemetry-label">Last Move</span>
+                <span id="last-move-text" class="status-value mono">—</span>
+              </div>
             </div>
-            <div class="telemetry-item">
-              <span class="telemetry-label">Passes</span>
-              <span id="pass-count-badge" class="badge count-badge">0 / 2</span>
-            </div>
-            <div class="telemetry-item">
-              <span class="telemetry-label">Last Move</span>
-              <span id="last-move-text" class="status-value mono">—</span>
-            </div>
-          </div>
 
-          <!-- Captures Display -->
-          <div class="captures-bar">
-            <div class="cap-box cap-black">
-              <span class="cap-label"><span class="stone-icon stone-black"></span> Captures</span>
-              <span id="black-captures" class="cap-num">0</span>
-            </div>
-            <div class="cap-box cap-white">
-              <span class="cap-label"><span class="stone-icon stone-white"></span> Captures</span>
-              <span id="white-captures" class="cap-num">0</span>
+            <!-- Captures Display -->
+            <div class="captures-bar">
+              <div class="cap-box cap-black">
+                <span class="cap-label"><span class="stone-icon stone-black"></span> Captures</span>
+                <span id="black-captures" class="cap-num">0</span>
+              </div>
+              <div class="cap-box cap-white">
+                <span class="cap-label"><span class="stone-icon stone-white"></span> Captures</span>
+                <span id="white-captures" class="cap-num">0</span>
+              </div>
             </div>
           </div>
         </section>
@@ -214,7 +307,7 @@
         <section class="card config-card">
           <details class="config-accordion" open>
             <summary class="card-title accordion-title">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <img src="/static/assets/icons/iconshock/settings.svg" class="icon-sm" alt="Settings">
               Room &amp; Game Settings
             </summary>
 
@@ -227,12 +320,20 @@
                 <div class="form-group">
                   <label for="mode-select">Game Mode</label>
                   <select id="mode-select">
-                    <option value="online" selected>🌐 Online 2-Player</option>
-                    <option value="ai">🤖 vs AI (StoneBot)</option>
-                    <option value="solo">🎮 Pass &amp; Play</option>
-                    <option value="debug">🛠️ Debug Sandbox (Both Sides)</option>
+                    <option value="online" selected>Online 2-Player</option>
+                    <option value="ai">vs AI (StoneBot)</option>
+                    <option value="solo">Pass &amp; Play</option>
+                    <option value="debug">Debug Sandbox (Both Sides)</option>
                   </select>
-
+                </div>
+                <div class="form-group" id="ai-difficulty-group" style="display: none;">
+                  <label for="ai-difficulty-select">AI Difficulty</label>
+                  <select id="ai-difficulty-select">
+                    <option value="easy">Easy (Beginner)</option>
+                    <option value="medium" selected>Medium (Intermediate)</option>
+                    <option value="hard">Hard (Dan Level)</option>
+                    <option value="master">Master (Sensei AI)</option>
+                  </select>
                 </div>
               </div>
 
@@ -268,9 +369,9 @@
                   <label for="tc-select">Clock Type</label>
                   <select id="tc-select">
                     <option value="none" selected>Untimed</option>
-                    <option value="byoyomi">⏱️ Byo-yomi</option>
-                    <option value="absolute">⚡ Absolute</option>
-                    <option value="fischer">⏳ Fischer</option>
+                    <option value="byoyomi">Byo-yomi</option>
+                    <option value="absolute">Absolute</option>
+                    <option value="fischer">Fischer</option>
                   </select>
                 </div>
                 <div class="form-group" id="main-time-group" style="display: none;">
@@ -305,99 +406,97 @@
         <section class="card admin-card" id="admin-panel-card" style="display: none;">
           <div class="card-header">
             <h2 class="card-title" style="color: #F59E0B;">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+              <img src="/static/assets/icons/iconshock/admin.svg" class="icon-sm" alt="Admin">
               Room Admin Panel
             </h2>
-            <span class="badge role-observer" id="admin-status-badge">Host Controls</span>
-          </div>
-
-          <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button type="button" id="btn-admin-pause" class="btn btn-secondary btn-sm" style="flex: 1;">
-              ⏸️ Pause Clock
-            </button>
-            <button type="button" id="btn-admin-reset" class="btn btn-secondary btn-sm" style="flex: 1;">
-              🔄 Reset Board
-            </button>
-          </div>
-
-          <div class="form-group" style="margin-top: 10px;">
-            <label for="admin-kick-select" style="font-size: 0.75rem;">Kick Player / Observer</label>
-            <div style="display: flex; gap: 6px;">
-              <select id="admin-kick-select" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
-                <option value="">Select occupant...</option>
-              </select>
-              <button type="button" id="btn-admin-kick" class="btn btn-danger btn-sm">Kick</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge role-observer" id="admin-status-badge">Host Controls</span>
+              <button type="button" class="btn-card-toggle" title="Toggle Panel">
+                <img src="/static/assets/icons/iconshock/next.svg" class="icon-xs collapse-chevron" alt="Toggle">
+              </button>
             </div>
           </div>
 
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Adjudicate Winner</label>
-            <div style="display: flex; gap: 6px;">
-              <button type="button" id="btn-award-black" class="btn btn-secondary btn-sm" style="flex: 1;">👑 Black Wins</button>
-              <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">👑 White Wins</button>
+          <div class="card-content">
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button type="button" id="btn-admin-pause" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <img src="/static/assets/icons/iconshock/pause.svg" class="icon-sm" alt="Pause"> Pause Clock
+              </button>
+              <button type="button" id="btn-admin-reset" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <img src="/static/assets/icons/iconshock/reset.svg" class="icon-sm" alt="Reset"> Reset Board
+              </button>
             </div>
-          </div>
 
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Room Privacy &amp; Lock</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="password" id="admin-pass-input" placeholder="Set Password" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
-              <button type="button" id="btn-toggle-privacy" class="btn btn-secondary btn-sm">🔒 Lock Room</button>
+            <div class="form-group" style="margin-top: 10px;">
+              <label for="admin-kick-select" style="font-size: 0.75rem;">Kick Player / Observer</label>
+              <div style="display: flex; gap: 6px;">
+                <select id="admin-kick-select" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+                  <option value="">Select occupant...</option>
+                </select>
+                <button type="button" id="btn-admin-kick" class="btn btn-danger btn-sm">
+                  <img src="/static/assets/icons/iconshock/kick.svg" class="icon-sm" alt="Kick"> Kick
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group" style="margin-top: 10px;">
-            <label style="font-size: 0.75rem;">Manual Score Override (Points)</label>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <input type="number" id="admin-score-b" placeholder="B pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
-              <span style="font-size: 0.8rem;">vs</span>
-              <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
-              <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Adjudicate Winner</label>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" id="btn-award-black" class="btn btn-secondary btn-sm" style="flex: 1;">
+                  <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> Black Wins
+                </button>
+                <button type="button" id="btn-award-white" class="btn btn-secondary btn-sm" style="flex: 1;">
+                  <img src="/static/assets/icons/iconshock/crown.svg" class="icon-sm" alt="Crown"> White Wins
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
 
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Room Privacy &amp; Lock</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="password" id="admin-pass-input" placeholder="Set Password" style="flex: 1; padding: 4px 8px; font-size: 0.8rem;">
+                <button type="button" id="btn-toggle-privacy" class="btn btn-secondary btn-sm">
+                  <img src="/static/assets/icons/iconshock/lock.svg" class="icon-sm" alt="Lock"> Lock Room
+                </button>
+              </div>
+            </div>
 
-        <!-- Room Chat & Reactions Panel -->
-        <section class="card chat-card">
-
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            Room Chat
-          </h2>
-          
-          <div class="reactions-bar">
-            <button type="button" class="btn-emoji" data-emoji="🔥">🔥</button>
-            <button type="button" class="btn-emoji" data-emoji="👏">👏</button>
-            <button type="button" class="btn-emoji" data-emoji="😮">😮</button>
-            <button type="button" class="btn-emoji" data-emoji="🤦">🤦</button>
-            <button type="button" class="btn-emoji" data-emoji="🎯">🎯</button>
-            <button type="button" class="btn-emoji" data-emoji="💡">💡</button>
-          </div>
-
-          <div id="chat-messages" class="chat-messages">
-            <span class="muted">Welcome to room chat!</span>
-          </div>
-
-          <form id="chat-form" class="chat-form">
-            <input type="text" id="chat-input" placeholder="Send a message..." required autocomplete="off">
-            <button type="submit" id="btn-send-chat" class="btn btn-primary btn-sm">Send</button>
-          </form>
-        </section>
-
-        <!-- Connected Players List -->
-        <section class="card players-card">
-          <h2 class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Connected Players
-          </h2>
-          <div id="players-list" class="players-list">
-            <span class="muted">Connecting...</span>
+            <div class="form-group" style="margin-top: 10px;">
+              <label style="font-size: 0.75rem;">Manual Score Override (Points)</label>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="number" id="admin-score-b" placeholder="B pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+                <span style="font-size: 0.8rem;">vs</span>
+                <input type="number" id="admin-score-w" placeholder="W pts" style="width: 65px; padding: 4px; font-size: 0.8rem;">
+                <button type="button" id="btn-manual-score" class="btn btn-secondary btn-sm" style="flex: 1;">Apply Score</button>
+              </div>
+            </div>
           </div>
         </section>
 
       </aside>
     </main>
+
+    <!-- Player Name Prompt Overlay Modal -->
+    <div id="name-prompt-overlay" class="modal-overlay modal-hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Welcome to StoneSync!</h3>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 14px; color: var(--text-secondary); font-size: 0.9rem;">
+            Please enter your player display name before joining:
+          </p>
+          <form id="name-prompt-form">
+            <div class="form-group">
+              <input type="text" id="name-prompt-input" placeholder="e.g. GoMaster_99" maxlength="20" required autocomplete="off" style="width: 100%; padding: 10px; font-size: 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-tertiary); color: var(--text-primary);">
+            </div>
+            <button type="submit" id="btn-save-name" class="btn btn-primary btn-full" style="margin-top: 14px;">
+              <img src="/static/assets/icons/iconshock/rocket.svg" class="icon-sm" alt="Join"> Join Match
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- Game Over Overlay Modal -->
     <div id="game-over-overlay" class="modal-overlay modal-hidden">

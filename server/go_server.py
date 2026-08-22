@@ -37,12 +37,16 @@ class Room:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ):
+        if board_size not in (9, 13, 19):
+            board_size = 19
         self.room_id = room_id
         self.is_solo = is_solo or is_debug
         self.is_ai = is_ai
         self.is_debug = is_debug
+        self.ai_difficulty = ai_difficulty.lower()
 
         self.game = GoGame(
             board_size=board_size,
@@ -55,6 +59,7 @@ class Room:
             fischer_increment_sec=fischer_increment_sec
         )
         self.players: Dict[str, str] = {}
+        self.player_names: Dict[str, str] = {}
         self.connections: Dict[WebSocket, str] = {}
         self.lock = asyncio.Lock()
         self.chat_history: list = []
@@ -62,16 +67,23 @@ class Room:
         self.is_paused: bool = False
         self.password: Optional[str] = None
         self.is_private: bool = False
-
+        self._cached_eval: Optional[dict] = None
+        self._cached_eval_move_count: int = -1
 
         if self.is_ai:
             self.players["bot_stonebot"] = "W"
-            self.bot = StoneBot(color="W", difficulty="tactical")
+            self.player_names["bot_stonebot"] = f"StoneBot ({self.ai_difficulty.capitalize()})"
+            self.bot = StoneBot(color="W", difficulty=self.ai_difficulty)
         else:
             self.bot = None
 
-    def register_player(self, player_id: str, preferred_color: Optional[str] = None) -> str:
+    def register_player(self, player_id: str, preferred_color: Optional[str] = None, name: Optional[str] = None) -> str:
         """Assign role ('B', 'W', or 'observer') to player_id, swapping roles if necessary."""
+        if name:
+            self.player_names[player_id] = name
+        elif player_id not in self.player_names:
+            self.player_names[player_id] = player_id[:6]
+
         if not self.host_id:
             self.host_id = player_id
 
@@ -110,13 +122,12 @@ class Room:
         else:
             return 'observer'
 
-
-
     def get_players_info(self) -> list:
         return [
             {
                 "player_id": pid,
-                "short_id": "StoneBot" if pid == "bot_stonebot" else pid[:6],
+                "short_id": self.player_names.get(pid) or ("StoneBot" if pid == "bot_stonebot" else pid[:6]),
+                "name": self.player_names.get(pid) or ("StoneBot" if pid == "bot_stonebot" else pid[:6]),
                 "color": color,
                 "is_bot": pid == "bot_stonebot"
             }
@@ -124,16 +135,22 @@ class Room:
         ]
 
     def get_state_payload(self) -> dict:
+        move_count = len(self.game.history)
+        if self._cached_eval is None or self._cached_eval_move_count != move_count:
+            self._cached_eval = evaluate_game(self.game)
+            self._cached_eval_move_count = move_count
+
         return {
             "type": "state",
             "room_id": self.room_id,
             "host_id": self.host_id,
             "is_paused": self.is_paused,
             "is_private": self.is_private,
+            "ai_difficulty": self.ai_difficulty,
             "game_state": self.game.to_dict(now_ts=time.time()),
             "players": self.get_players_info(),
             "chat_history": self.chat_history[-50:],
-            "ai_evaluation": evaluate_game(self.game)
+            "ai_evaluation": self._cached_eval
         }
 
 
@@ -193,7 +210,8 @@ class RoomManager:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ) -> Room:
         if room_id not in self.rooms:
             self.rooms[room_id] = Room(
@@ -208,8 +226,16 @@ class RoomManager:
                 main_time_sec=main_time_sec,
                 byoyomi_periods=byoyomi_periods,
                 byoyomi_time_sec=byoyomi_time_sec,
-                fischer_increment_sec=fischer_increment_sec
+                fischer_increment_sec=fischer_increment_sec,
+                ai_difficulty=ai_difficulty
             )
+        else:
+            room = self.rooms[room_id]
+            if ai_difficulty:
+                room.ai_difficulty = ai_difficulty.lower()
+                if room.bot:
+                    room.bot.difficulty = room.ai_difficulty
+                    room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
         return self.rooms[room_id]
 
     async def connect_client(
@@ -217,6 +243,7 @@ class RoomManager:
         websocket: WebSocket,
         room_id: str,
         player_id: str,
+        player_name: Optional[str] = None,
         board_size: int = 19,
         komi: Optional[float] = None,
         handicap: int = 0,
@@ -227,7 +254,8 @@ class RoomManager:
         main_time_sec: float = 600.0,
         byoyomi_periods: int = 3,
         byoyomi_time_sec: float = 30.0,
-        fischer_increment_sec: float = 5.0
+        fischer_increment_sec: float = 5.0,
+        ai_difficulty: str = 'medium'
     ) -> Tuple[Room, str]:
         await websocket.accept()
         room = self.get_or_create_room(
@@ -242,7 +270,8 @@ class RoomManager:
             main_time_sec=main_time_sec,
             byoyomi_periods=byoyomi_periods,
             byoyomi_time_sec=byoyomi_time_sec,
-            fischer_increment_sec=fischer_increment_sec
+            fischer_increment_sec=fischer_increment_sec,
+            ai_difficulty=ai_difficulty
         )
         if is_solo or is_debug:
             room.is_solo = True
@@ -250,12 +279,17 @@ class RoomManager:
             room.is_debug = True
         if is_ai:
             room.is_ai = True
+            room.ai_difficulty = ai_difficulty.lower()
             if "bot_stonebot" not in room.players:
                 room.players["bot_stonebot"] = "W"
-                room.bot = StoneBot(color="W", difficulty="tactical")
+                room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
+                room.bot = StoneBot(color="W", difficulty=room.ai_difficulty)
+            elif room.bot:
+                room.bot.difficulty = room.ai_difficulty
+                room.player_names["bot_stonebot"] = f"StoneBot ({room.ai_difficulty.capitalize()})"
 
         async with room.lock:
-            role = room.register_player(player_id)
+            role = room.register_player(player_id, name=player_name)
             room.connections[websocket] = player_id
             
         sync_payload = room.get_state_payload()
@@ -428,14 +462,21 @@ class RoomManager:
                     except ValueError:
                         pass
 
+            elif action == "set_name":
+                new_name = str(data.get("name", "")).strip()
+                if new_name:
+                    room.player_names[player_id] = new_name
+                    state = room.get_state_payload()
+                    state["last_action"] = {"action": "set_name", "player_id": player_id, "name": new_name}
+                    await room.broadcast(state)
+
             elif action == "chat":
-
-
                 msg_text = str(data.get("text", "")).strip()
                 if msg_text:
+                    display_name = room.player_names.get(player_id) or player_id[:6]
                     chat_item = {
                         "player_id": player_id,
-                        "short_id": player_id[:6],
+                        "short_id": display_name,
                         "role": role,
                         "text": msg_text,
                         "timestamp": time.strftime("%H:%M:%S")

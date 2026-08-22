@@ -7,13 +7,13 @@ from typing import Dict, List, Optional, Tuple
 from server.go_game import GoGame
 
 class StoneBot:
-    def __init__(self, color: str = 'W', difficulty: str = 'tactical'):
+    def __init__(self, color: str = 'W', difficulty: str = 'medium'):
         self.color = color
         self.difficulty = difficulty.lower()
 
     def select_move(self, game: GoGame) -> Optional[Tuple[int, int]]:
         """
-        Select best move (row, col) for self.color.
+        Select best move (row, col) for self.color according to self.difficulty.
         Returns None if bot decides to pass.
         """
         if game.game_over or game.current_player != self.color:
@@ -23,8 +23,10 @@ class StoneBot:
         if not legal_moves:
             return None  # Pass
 
-        if self.difficulty == 'random':
-            return random.choice(legal_moves)
+        if self.difficulty in ('random', 'easy'):
+            # Easy mode: 70% random choice
+            if random.random() < 0.7:
+                return random.choice(legal_moves)
 
         opponent = 'W' if self.color == 'B' else 'B'
         scored_moves: List[Tuple[float, Tuple[int, int]]] = []
@@ -33,7 +35,6 @@ class StoneBot:
             score = 0.0
 
             # 1. Capture Opponent Stones
-            # Simulate move to see if it captures opponent stones
             temp_grid = [row[:] for row in game.grid]
             temp_grid[r][c] = self.color
             captured_count = 0
@@ -54,34 +55,45 @@ class StoneBot:
                         score += 30.0
 
             # 3. Shape & Opening Heuristics
-            # Star points bonus
             size = game.board_size
             mid = (size - 1) / 2
             center_dist = abs(r - mid) + abs(c - mid)
             score += max(0, 10 - center_dist)
 
-            # 3rd & 4th line preference (corner/side territory building)
             min_edge = min(r, c, size - 1 - r, size - 1 - c)
             if min_edge in (2, 3):  # 3rd and 4th lines
                 score += 8.0
             elif min_edge == 1:
                 score += 3.0
             elif min_edge == 0:
-                score -= 5.0  # 1st line edge placement penalty early on
+                score -= 5.0
 
             # 4. Connectivity: Bonus for neighboring friendly stones
             friendly_neighbors = sum(1 for nr, nc in game._get_neighbors(r, c) if game.grid[nr][nc] == self.color)
             score += friendly_neighbors * 4.0
 
-            # Slight randomness to diversify play
-            score += random.uniform(0.0, 2.0)
+            # Noise based on difficulty
+            if self.difficulty in ('easy', 'random'):
+                score += random.uniform(-10.0, 10.0)
+            elif self.difficulty == 'medium':
+                score += random.uniform(-3.0, 3.0)
+            elif self.difficulty == 'hard':
+                score += random.uniform(-0.5, 0.5)
 
             scored_moves.append((score, (r, c)))
 
         scored_moves.sort(key=lambda x: x[0], reverse=True)
-        best_score, best_move = scored_moves[0]
 
-        # Pass if top move score is negative or meaningless
+        if self.difficulty == 'easy':
+            choices = scored_moves[:min(5, len(scored_moves))]
+            return random.choice(choices)[1]
+
+        if self.difficulty == 'medium':
+            choices = scored_moves[:min(3, len(scored_moves))]
+            return random.choice(choices)[1]
+
+        # Hard & Master: top candidate move
+        best_score, best_move = scored_moves[0]
         if best_score < -15.0:
             return None
 

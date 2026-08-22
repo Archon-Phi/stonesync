@@ -1,7 +1,7 @@
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e',
   testMatch: '**/*.spec.js',
   timeout: 30000,
   expect: {
@@ -27,7 +27,7 @@ module.exports = defineConfig({
   webServer: {
     command: 'PYTHONPATH=. .venv/bin/uvicorn server.app:app --port 8085',
     url: 'http://127.0.0.1:8085/go',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 10000,
   },
 });

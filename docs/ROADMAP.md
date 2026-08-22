@@ -20,22 +20,23 @@ This document outlines the planned release milestones for **StoneSync**, a local
 
 ---
 
-### 🟡 Version 1.1.0 — Match Customization & Timers (Q3 2026)
-- [ ] **Byo-yomi & Fischer Time Controls**: Server-authoritative move timers and clock countdowns.
-- [ ] **Handicap Stone Placement**: Standard 2 to 9 stone handicap setups.
-- [ ] **SGF Import & Export**: Download `.sgf` match replays and import existing games.
-- [ ] **In-Game Chat & Reactions**: Real-time room text messaging and quick emoji stone overlays.
+### 🟡 Version 1.1.0 — Match Customization & Timers (Completed)
+- [x] **Byo-yomi & Fischer Time Controls**: Server-authoritative move timers and clock countdowns.
+- [x] **Handicap Stone Placement**: Standard 2 to 9 stone handicap setups.
+- [x] **SGF Import & Export**: Download `.sgf` match replays (`/api/room/{roomId}/sgf`) and import existing SGF records.
+- [x] **In-Game Chat & Reactions**: Real-time room text messaging and floating emoji stone overlays.
 
 ---
 
-### 🔵 Version 1.2.0 — AI Assistant & Analysis (Q4 2026)
-- [ ] **WASM KataGo AI Evaluator**: Client-side win-rate bar and top move suggestions.
-- [ ] **Blunder & Error Inspector**: Jump to high-impact mistake turns during game review.
-- [ ] **Ghost Variation Sandbox**: Interactive local side-board for testing move variations.
+### 🔵 Version 1.2.0 — AI Assistant & Analysis Engine (Completed)
+- [x] **StoneSensei Local Ollama Agent Layer**: Confidential local LLM agent (`0.0.0.0:8085`) with continuous multi-turn chat history.
+- [x] **Positional AI Evaluator (`server/evaluator.py`)**: Real-time win-rate bar, score lead telemetry, and top tactical move overlay pins.
+- [x] **Docker Compose Watch & DX**: Live frontend file sync and automated server hot-restarting.
+- [x] **Automated E2E Test Suite (`tests/e2e/e2e.spec.js`)**: Playwright automation suite for UI canvas, identity modal sync, and REST endpoints.
 
 ---
 
-### 🟣 Version 2.0.0 — Tournament & Mobile Apps (2027)
+### 🟣 Version 2.0.0 — Tournament & Mobile Apps (Planned)
 - [ ] **Swiss Bracket Tournament Engine**: Automated multi-room pairing and leaderboard rankings.
 - [ ] **Mobile Native PWA**: Offline puzzle solver and touch-optimized haptic feedback.
 - [ ] **Phantom Go (Fog of War) Variant**: Hidden opponent stone game mode.

@@ -4,15 +4,21 @@ Serves static frontend assets, main UI route /go (and / redirect), and WebSocket
 """
 import os
 from pathlib import Path
+from typing import Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.go_server import RoomManager
 from server.sgf import export_to_sgf, parse_sgf
+from server.agents.ollama_agent import agent_app as ollama_agent_app
 from fastapi import Response, Request
 
 app = FastAPI(title="StoneSync - Online Multiplayer Go")
+
+# Include local Ollama LLM Agent routes
+app.include_router(ollama_agent_app.router)
+
 
 
 # Locate frontend directory relative to current file
@@ -75,6 +81,7 @@ async def websocket_go_endpoint(
     websocket: WebSocket,
     room_id: str,
     player_id: str = Query(...),
+    player_name: str = Query(""),
     board_size: int = Query(19),
     komi: float = Query(6.5),
     handicap: int = Query(0),
@@ -83,7 +90,8 @@ async def websocket_go_endpoint(
     main_time_sec: float = Query(600.0),
     byoyomi_periods: int = Query(3),
     byoyomi_time_sec: float = Query(30.0),
-    fischer_increment_sec: float = Query(5.0)
+    fischer_increment_sec: float = Query(5.0),
+    ai_difficulty: str = Query("medium")
 ):
 
     is_solo = (mode in ("solo", "debug"))
@@ -93,6 +101,7 @@ async def websocket_go_endpoint(
         websocket,
         room_id,
         player_id,
+        player_name=player_name,
         board_size=board_size,
         komi=komi,
         handicap=handicap,
@@ -103,8 +112,8 @@ async def websocket_go_endpoint(
         main_time_sec=main_time_sec,
         byoyomi_periods=byoyomi_periods,
         byoyomi_time_sec=byoyomi_time_sec,
-        fischer_increment_sec=fischer_increment_sec
-
+        fischer_increment_sec=fischer_increment_sec,
+        ai_difficulty=ai_difficulty
     )
 
 

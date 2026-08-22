@@ -16,6 +16,26 @@
     return pid;
   }
 
+  function getPlayerName() {
+    return localStorage.getItem('stonesync_player_name') || '';
+  }
+
+  function setPlayerName(name) {
+    if (name) {
+      localStorage.setItem('stonesync_player_name', name.trim());
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   const playerId = getOrCreatePlayerId();
   let socket = null;
   let currentGameState = null;
@@ -42,6 +62,7 @@
   let currentMainTimeMin = parseInt(urlParams.get('main_time') || '10', 10);
   let currentByoPeriods = parseInt(urlParams.get('byo_p') || '3', 10);
   let currentByoTimeSec = parseInt(urlParams.get('byo_t') || '30', 10);
+  let currentAiDifficulty = urlParams.get('ai_difficulty') || 'medium';
 
   if (![9, 13, 19].includes(currentBoardSize)) {
     currentBoardSize = 19;
@@ -50,6 +71,8 @@
   // --- 3. DOM Elements ---
   const roomInput = document.getElementById('room-input');
   const modeSelect = document.getElementById('mode-select');
+  const aiDifficultyGroup = document.getElementById('ai-difficulty-group');
+  const aiDifficultySelect = document.getElementById('ai-difficulty-select');
   const boardSizeSelect = document.getElementById('board-size-select');
   const handicapSelect = document.getElementById('handicap-select');
   const komiInput = document.getElementById('komi-input');
@@ -107,6 +130,51 @@
   const komiDisplay = document.getElementById('komi-display');
   const btnModalReset = document.getElementById('btn-modal-reset');
   const btnModalClose = document.getElementById('btn-modal-close');
+
+  // Name Prompt Modal Elements
+  const namePromptOverlay = document.getElementById('name-prompt-overlay');
+  const namePromptForm = document.getElementById('name-prompt-form');
+  const namePromptInput = document.getElementById('name-prompt-input');
+  const btnEditName = document.getElementById('btn-edit-name');
+
+  function showNamePromptModal() {
+    if (!namePromptOverlay) return;
+    const currentName = getPlayerName();
+    if (namePromptInput) namePromptInput.value = currentName;
+    namePromptOverlay.classList.remove('modal-hidden');
+    setTimeout(() => { if (namePromptInput) namePromptInput.focus(); }, 100);
+  }
+
+  function hideNamePromptModal() {
+    if (namePromptOverlay) namePromptOverlay.classList.add('modal-hidden');
+  }
+
+  if (namePromptForm) {
+    namePromptForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = namePromptInput ? namePromptInput.value.trim() : '';
+      if (val) {
+        setPlayerName(val);
+        hideNamePromptModal();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ action: 'set_name', name: val }));
+        } else if (socket && socket.readyState === WebSocket.CONNECTING) {
+          socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({ action: 'set_name', name: val }));
+          }, { once: true });
+        } else {
+          connectWebSocket();
+        }
+        showToast(`Welcome, ${val}!`, false);
+      }
+    });
+  }
+
+  if (btnEditName) {
+    btnEditName.addEventListener('click', () => {
+      showNamePromptModal();
+    });
+  }
 
   // --- 4. Spatial Audio Engine ---
   let audioContext = null;
@@ -191,6 +259,32 @@
   }
 
   // --- 5. Theme & Controls Sync ---
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  const themeToggleLabel = document.getElementById('theme-toggle-label');
+  let currentDisplayMode = localStorage.getItem('stonesync_mode') || 'dark';
+
+  function applyDisplayMode(mode) {
+    currentDisplayMode = mode;
+    localStorage.setItem('stonesync_mode', mode);
+    if (mode === 'light') {
+      document.body.classList.add('light-theme');
+      if (themeToggleLabel) themeToggleLabel.textContent = 'Light Mode';
+    } else {
+      document.body.classList.remove('light-theme');
+      if (themeToggleLabel) themeToggleLabel.textContent = 'Dark Mode';
+    }
+  }
+
+  applyDisplayMode(currentDisplayMode);
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener('click', () => {
+      const nextMode = (currentDisplayMode === 'dark') ? 'light' : 'dark';
+      applyDisplayMode(nextMode);
+      showToast(`Switched to ${nextMode.toUpperCase()} Mode UI`, false);
+    });
+  }
+
   function applyTheme(theme) {
     currentTheme = theme;
     localStorage.setItem('stonesync_theme', theme);
@@ -217,6 +311,13 @@
     renderBoard();
   });
 
+  function syncModeFieldsVisibility() {
+    const selectedMode = modeSelect ? modeSelect.value : currentMode;
+    if (aiDifficultyGroup) {
+      aiDifficultyGroup.style.display = (selectedMode === 'ai') ? 'block' : 'none';
+    }
+  }
+
   function syncTcFieldsVisibility() {
     const val = tcSelect.value;
     if (val === 'none') {
@@ -231,10 +332,20 @@
     }
   }
 
+  if (modeSelect) {
+    modeSelect.value = currentMode;
+    syncModeFieldsVisibility();
+    modeSelect.addEventListener('change', syncModeFieldsVisibility);
+  }
+
   if (tcSelect) {
     tcSelect.value = currentTc;
     syncTcFieldsVisibility();
     tcSelect.addEventListener('change', syncTcFieldsVisibility);
+  }
+
+  if (aiDifficultySelect) {
+    aiDifficultySelect.value = currentAiDifficulty;
   }
 
   function updateUrlAndControls() {
@@ -242,6 +353,7 @@
     const navRoomId = document.getElementById('nav-room-id');
     if (navRoomId) navRoomId.textContent = currentRoomId;
     if (modeSelect) modeSelect.value = currentMode;
+    if (aiDifficultySelect) aiDifficultySelect.value = currentAiDifficulty;
     boardSizeSelect.value = currentBoardSize.toString();
     if (handicapSelect) handicapSelect.value = currentHandicap.toString();
     komiInput.value = currentKomi.toString();
@@ -250,8 +362,9 @@
     if (mainTimeInput) mainTimeInput.value = currentMainTimeMin.toString();
     if (byoyomiPeriodsInput) byoyomiPeriodsInput.value = currentByoPeriods.toString();
     syncTcFieldsVisibility();
+    syncModeFieldsVisibility();
 
-    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&tc=${currentTc}&main_time=${currentMainTimeMin}&byo_p=${currentByoPeriods}`;
+    const fullUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomId)}&mode=${currentMode}&ai_difficulty=${encodeURIComponent(currentAiDifficulty)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&tc=${currentTc}&main_time=${currentMainTimeMin}&byo_p=${currentByoPeriods}`;
     shareUrlInput.value = fullUrl;
     window.history.replaceState({}, '', fullUrl);
   }
@@ -271,6 +384,21 @@
         showToast(senseiHintsActive ? '💡 AI Sensei Tactical Move Evaluation Active' : 'Sensei Hints Hidden', !senseiHintsActive);
         renderBoard();
       } catch (err) {}
+    }
+
+    const cardHeader = e.target.closest('.card-header');
+    if (cardHeader && !e.target.closest('#btn-edit-name')) {
+      const card = cardHeader.closest('.card');
+      if (card) {
+        card.classList.toggle('collapsed');
+      }
+    }
+
+    const btnTheme = e.target.closest('#btn-theme-toggle');
+    if (btnTheme) {
+      const nextMode = (currentDisplayMode === 'dark') ? 'light' : 'dark';
+      applyDisplayMode(nextMode);
+      showToast(`Switched to ${nextMode.toUpperCase()} Mode UI`, false);
     }
 
     const btnZenAmbient = e.target.closest('#btn-zen-ambient');
@@ -330,12 +458,18 @@
   const mp3Title = document.getElementById('mp3-track-title');
   const mp3Time = document.getElementById('mp3-track-time');
 
+  const ICON_PLAY = '<img src="/static/assets/icons/iconshock/play.svg" class="icon-xs" alt="Play">';
+  const ICON_PAUSE = '<img src="/static/assets/icons/iconshock/pause.svg" class="icon-xs" alt="Pause">';
+
   function loadTrack(idx) {
     if (!mp3Audio || !mp3Playlist || !mp3Playlist[idx]) return;
     currentTrackIdx = idx;
     const track = mp3Playlist[currentTrackIdx];
     mp3Audio.src = track.src;
-    if (mp3Title) mp3Title.textContent = track.title;
+    if (mp3Title) {
+      const cleanTitle = escapeHtml(track.title.replace(/^[🎵🎧]\s*/, ''));
+      mp3Title.innerHTML = `<img src="/static/assets/icons/iconshock/music.svg" class="icon-xs" alt="Music"> ${cleanTitle}`;
+    }
   }
 
 
@@ -343,14 +477,14 @@
     if (!mp3Audio) return;
     if (mp3Audio.paused) {
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
-        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title}`, false);
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
+        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title.replace(/^[🎵🎧]\s*/, '')}`, false);
       }).catch(e => {
         showToast('Click play to allow audio playback', true);
       });
     } else {
       mp3Audio.pause();
-      if (btnMp3Play) btnMp3Play.textContent = '▶️';
+      if (btnMp3Play) btnMp3Play.innerHTML = ICON_PLAY;
     }
   }
 
@@ -373,7 +507,7 @@
     btnMp3Next.addEventListener('click', () => {
       loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
       });
     });
   }
@@ -381,7 +515,7 @@
     btnMp3Prev.addEventListener('click', () => {
       loadTrack((currentTrackIdx - 1 + mp3Playlist.length) % mp3Playlist.length);
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
       });
     });
   }
@@ -716,7 +850,8 @@
     const host = window.location.host || '127.0.0.1:8080';
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const mainTimeSec = currentMainTimeMin * 60;
-    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&mode=${currentMode}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
+    const playerName = getPlayerName();
+    const wsUrl = `${wsProtocol}//${host}/ws/go/${encodeURIComponent(currentRoomId)}?player_id=${encodeURIComponent(playerId)}&player_name=${encodeURIComponent(playerName)}&mode=${currentMode}&ai_difficulty=${encodeURIComponent(currentAiDifficulty)}&board_size=${currentBoardSize}&handicap=${currentHandicap}&komi=${currentKomi}&time_control=${currentTc}&main_time_sec=${mainTimeSec}&byoyomi_periods=${currentByoPeriods}&byoyomi_time_sec=${currentByoTimeSec}`;
 
     try {
       socket = new WebSocket(wsUrl);
@@ -728,6 +863,10 @@
 
     socket.onopen = () => {
       console.log('Connected to StoneSync Room:', currentRoomId);
+      const name = getPlayerName();
+      if (name) {
+        socket.send(JSON.stringify({ action: 'set_name', name: name }));
+      }
     };
 
     socket.onmessage = (event) => {
@@ -901,7 +1040,9 @@
     adminPanelCard.style.display = isHost ? 'block' : 'none';
 
     if (adminPauseBtn && data.is_paused !== undefined) {
-      adminPauseBtn.textContent = data.is_paused ? '▶️ Resume Clock' : '⏸️ Pause Clock';
+      adminPauseBtn.innerHTML = data.is_paused 
+        ? '<img src="/static/assets/icons/iconshock/play.svg" class="icon-sm" alt="Resume"> Resume Clock' 
+        : '<img src="/static/assets/icons/iconshock/pause.svg" class="icon-sm" alt="Pause"> Pause Clock';
     }
 
     if (adminKickSelect && data.players) {
@@ -1061,7 +1202,8 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   function updateRoleBadge() {
@@ -1125,6 +1267,7 @@
 
     playersListEl.innerHTML = players.map(p => {
       const isMe = p.player_id === playerId;
+      const displayName = p.name || p.short_id || (p.player_id ? p.player_id.substring(0, 6) : 'Player');
       let colorTag = '<span class="badge role-observer">Observer</span>';
       if (p.color === 'B') colorTag = '<span class="badge role-black"><span class="stone-icon stone-black"></span> Black</span>';
       if (p.color === 'W') colorTag = '<span class="badge role-white"><span class="stone-icon stone-white"></span> White</span>';
@@ -1132,7 +1275,7 @@
       return `
         <div class="player-item">
           <div class="player-info">
-            <span class="mono">${p.short_id}</span>
+            <span class="mono">${escapeHtml(displayName)}</span>
             ${isMe ? '<span class="player-you-tag">YOU</span>' : ''}
           </div>
           ${colorTag}
@@ -1722,6 +1865,9 @@
   // --- 12. Initialization ---
   updateUrlAndControls();
   connectWebSocket();
+  if (!getPlayerName()) {
+    showNamePromptModal();
+  }
   setTimeout(resizeCanvas, 50);
 
 })();

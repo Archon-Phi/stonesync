@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 test.describe('StoneSync AI Analytics & Real-Time Suite', () => {
 
   test('Page metadata, Canvas board, and AI Evaluation Card initialization', async ({ page }) => {
-    // 1. Navigate relative to baseURL
+    await page.addInitScript(() => localStorage.setItem('stonesync_player_name', 'PlaywrightUser'));
     await page.goto('/go');
     await expect(page).toHaveTitle(/StoneSync/);
 
@@ -28,6 +28,7 @@ test.describe('StoneSync AI Analytics & Real-Time Suite', () => {
   });
 
   test('Sensei Tactical Move Recommendations & Canvas Overlay Toggle', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('stonesync_player_name', 'PlaywrightUser'));
     await page.goto('/go');
 
     // 1. Wait for top recommendation items to populate
@@ -56,4 +57,54 @@ test.describe('StoneSync AI Analytics & Real-Time Suite', () => {
     expect(body).toContain('GM[1]'); // SGF Game Mode Go
   });
 
+  test('Local Ollama Agent API Endpoint functionality', async ({ request }) => {
+    // Test Ollama health endpoint
+    const healthResp = await request.get('/api/ollama/health');
+    expect(healthResp.ok()).toBeTruthy();
+
+    const healthData = await healthResp.json();
+    expect(healthData.status).toBe('online');
+    expect(healthData.config.host).toBe('0.0.0.0');
+
+    // Test Ollama predict move endpoint
+    const predictResp = await request.post('/api/ollama/predict', {
+      data: {
+        session_id: 'e2e-playwright-session',
+        board_size: 19,
+        current_player: 'W',
+        last_move: { r: 15, c: 4, player: 'B', notation: 'E4' },
+        captures: { B: 0, W: 0 }
+      }
+    });
+    expect(predictResp.ok()).toBeTruthy();
+
+    const predictData = await predictResp.json();
+    expect(predictData.status).toBe('success');
+    expect(predictData.session_id).toBe('e2e-playwright-session');
+    expect(predictData.prediction).toBeDefined();
+    expect(predictData.prediction.suggested_move).toBeDefined();
+  });
+
+  test('Player Name Prompt Modal & Custom Display Name Sync', async ({ page }) => {
+    await page.goto('/go?room=identity-test-room');
+
+    const modal = page.locator('#name-prompt-overlay');
+    if (!(await modal.isVisible())) {
+      await page.locator('#btn-edit-name').click();
+    }
+    await expect(modal).toBeVisible();
+
+    // Fill in player name & submit
+    const input = page.locator('#name-prompt-input');
+    await input.fill('GoMaster_Playwright');
+    const btnSubmit = page.locator('#btn-save-name');
+    await btnSubmit.click();
+
+    // Modal should hide and player list should contain custom display name
+    await expect(modal).toHaveClass(/modal-hidden/);
+    const playersList = page.locator('#players-list');
+    await expect(playersList).toContainText('GoMaster_Playwright');
+  });
+
 });
+
