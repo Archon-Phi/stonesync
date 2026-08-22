@@ -56,4 +56,33 @@ test.describe('StoneSync AI Analytics & Real-Time Suite', () => {
     expect(body).toContain('GM[1]'); // SGF Game Mode Go
   });
 
+  test('Local Ollama Agent API Endpoint functionality', async ({ request }) => {
+    // Test Ollama health endpoint
+    const healthResp = await request.get('/api/ollama/health');
+    expect(healthResp.ok()).toBeTruthy();
+
+    const healthData = await healthResp.json();
+    expect(healthData.status).toBe('online');
+    expect(healthData.config.host).toBe('0.0.0.0');
+
+    // Test Ollama predict move endpoint
+    const predictResp = await request.post('/api/ollama/predict', {
+      data: {
+        session_id: 'e2e-playwright-session',
+        board_size: 19,
+        current_player: 'W',
+        last_move: { r: 15, c: 4, player: 'B', notation: 'E4' },
+        captures: { B: 0, W: 0 }
+      }
+    });
+    expect(predictResp.ok()).toBeTruthy();
+
+    const predictData = await predictResp.json();
+    expect(predictData.status).toBe('success');
+    expect(predictData.session_id).toBe('e2e-playwright-session');
+    expect(predictData.prediction).toBeDefined();
+    expect(predictData.prediction.suggested_move).toBeDefined();
+  });
+
 });
+
