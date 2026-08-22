@@ -22,6 +22,8 @@
   let myRole = 'observer'; // 'B', 'W', or 'observer'
   let prevCapturesCount = 0;
   let hoveredIntersection = null;
+  let lastAIEvaluation = null;
+  let senseiHintsActive = false;
 
   // Theme & Visual Features State
   let currentTheme = localStorage.getItem('stonesync_theme') || 'kaya';
@@ -878,6 +880,11 @@
     updateClockUI();
     updateAdminPanel(data);
 
+    if (data.ai_evaluation) {
+      lastAIEvaluation = data.ai_evaluation;
+      updateAIEvaluationUI(lastAIEvaluation);
+    }
+
     if (gameState.game_over) {
       showGameOverModal(gameState);
     } else {
@@ -912,6 +919,85 @@
         }
       });
       if (currentVal) adminKickSelect.value = currentVal;
+    }
+  }
+
+  function toBoardCoords(r, c, size = 19) {
+    const colChar = c >= 8 ? String.fromCharCode(65 + c + 1) : String.fromCharCode(65 + c);
+    const rowNum = (size - r).toString();
+    return `${colChar}${rowNum}`;
+  }
+
+  function updateAIEvaluationUI(evalData) {
+    if (!evalData) return;
+
+    const scoreLeadBadge = document.getElementById('score-lead-badge');
+    const wrBlackText = document.getElementById('wr-black-text');
+    const wrWhiteText = document.getElementById('wr-white-text');
+    const wrBarFillB = document.getElementById('wr-bar-fill-b');
+    const wrBarFillW = document.getElementById('wr-bar-fill-w');
+    const topMovesList = document.getElementById('top-moves-list');
+
+    if (scoreLeadBadge) {
+      scoreLeadBadge.textContent = evalData.score_lead || 'Even Match';
+      if (evalData.score_lead.startsWith('B')) {
+        scoreLeadBadge.className = 'badge role-badge role-black';
+      } else if (evalData.score_lead.startsWith('W')) {
+        scoreLeadBadge.className = 'badge role-badge role-white';
+      } else {
+        scoreLeadBadge.className = 'badge role-badge role-observer';
+      }
+    }
+
+    if (wrBlackText) wrBlackText.textContent = `Black ${evalData.win_rate_black}%`;
+    if (wrWhiteText) wrWhiteText.textContent = `White ${evalData.win_rate_white}%`;
+
+    if (wrBarFillB) wrBarFillB.style.width = `${evalData.win_rate_black}%`;
+    if (wrBarFillW) wrBarFillW.style.width = `${evalData.win_rate_white}%`;
+
+    if (topMovesList) {
+      topMovesList.innerHTML = '';
+      if (!evalData.top_moves || evalData.top_moves.length === 0) {
+        topMovesList.innerHTML = '<div class="top-move-item empty-state">No legal move recommendations available.</div>';
+        return;
+      }
+
+      evalData.top_moves.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'top-move-item';
+        const coordsText = toBoardCoords(m.r, m.c, currentGameState ? currentGameState.board_size : currentBoardSize);
+
+        item.innerHTML = `
+          <span class="top-move-badge">${m.badge || '①'}</span>
+          <span class="top-move-coords">${coordsText}</span>
+          <div class="top-move-meta">
+            <span class="top-move-note">${m.note}</span>
+            <span class="top-move-winrate">Win Rate: ${m.win_rate_b}% (B) / ${m.win_rate_w}% (W)</span>
+          </div>
+        `;
+
+        item.addEventListener('mouseenter', () => {
+          hoveredIntersection = { r: m.r, c: m.c };
+          renderBoard();
+        });
+
+        item.addEventListener('mouseleave', () => {
+          hoveredIntersection = null;
+          renderBoard();
+        });
+
+        item.addEventListener('click', () => {
+          if (socket && socket.readyState === WebSocket.OPEN && !currentGameState.game_over) {
+            socket.send(JSON.stringify({
+              action: 'move',
+              r: m.r,
+              c: m.c
+            }));
+          }
+        });
+
+        topMovesList.appendChild(item);
+      });
     }
   }
 
@@ -1372,50 +1458,36 @@
 
   function renderSenseiHints(startX, startY, cellSize, size, grid) {
     if (!currentGameState || currentGameState.game_over) return;
+    if (!lastAIEvaluation || !lastAIEvaluation.top_moves) return;
 
-    const candidates = [];
-    const starPts = [
-      [3, 3], [3, Math.floor(size/2)], [3, size - 4],
-      [Math.floor(size/2), 3], [Math.floor(size/2), Math.floor(size/2)], [Math.floor(size/2), size - 4],
-      [size - 4, 3], [size - 4, Math.floor(size/2)], [size - 4, size - 4]
-    ];
+    const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+    lastAIEvaluation.top_moves.forEach((cand, idx) => {
+      if (grid[cand.r] && grid[cand.r][cand.c] !== null) return;
 
-    starPts.forEach(([r, c]) => {
-      if (grid[r] && grid[r][c] === null) {
-        candidates.push({ r, c, winPct: 68, label: '🥇 68%' });
-      }
-    });
-
-    if (candidates.length < 3) {
-      for (let r = 2; r < size - 2; r += 3) {
-        for (let c = 2; c < size - 2; c += 3) {
-          if (grid[r] && grid[r][c] === null) {
-            candidates.push({ r, c, winPct: 54, label: '🥈 54%' });
-            if (candidates.length >= 3) break;
-          }
-        }
-        if (candidates.length >= 3) break;
-      }
-    }
-
-    const colors = ['#10B981', '#3B82F6', '#F59E0B'];
-    candidates.slice(0, 3).forEach((cand, idx) => {
       const cx = startX + cand.c * cellSize;
       const cy = startY + cand.r * cellSize;
+      const color = colors[idx] || '#3b82f6';
+      const label = `${cand.badge} ${cand.win_rate_b}%`;
 
       ctx.save();
       ctx.beginPath();
-      ctx.arc(cx, cy, cellSize * 0.42, 0, Math.PI * 2);
+      ctx.arc(cx, cy, cellSize * 0.44, 0, Math.PI * 2);
       ctx.lineWidth = 3;
-      ctx.strokeStyle = colors[idx] || '#10B981';
-      ctx.shadowColor = colors[idx] || '#10B981';
-      ctx.shadowBlur = 10;
+      ctx.strokeStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
       ctx.stroke();
 
+      ctx.beginPath();
+      ctx.arc(cx, cy, cellSize * 0.36, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+      ctx.fill();
+
       ctx.font = 'bold 11px "Space Mono", monospace';
-      ctx.fillStyle = colors[idx] || '#10B981';
+      ctx.fillStyle = color;
       ctx.textAlign = 'center';
-      ctx.fillText(cand.label, cx, cy + 4);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, cy);
       ctx.restore();
     });
   }
