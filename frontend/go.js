@@ -529,6 +529,8 @@
         }
       }
 
+      if (currentGameState) updateButtons(currentGameState);
+
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
           action: 'switch_side',
@@ -987,7 +989,12 @@
         });
 
         item.addEventListener('click', () => {
-          if (socket && socket.readyState === WebSocket.OPEN && !currentGameState.game_over) {
+          if (!currentGameState || currentGameState.game_over) return;
+          if (currentMode !== 'solo' && currentMode !== 'debug' && myRole === 'observer') {
+            showToast('Observers cannot place stones', true);
+            return;
+          }
+          if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
               action: 'move',
               r: m.r,
