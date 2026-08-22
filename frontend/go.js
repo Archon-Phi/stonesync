@@ -395,12 +395,18 @@
   const mp3Title = document.getElementById('mp3-track-title');
   const mp3Time = document.getElementById('mp3-track-time');
 
+  const ICON_PLAY = '<img src="/static/assets/icons/iconshock/play.svg" class="icon-xs" alt="Play">';
+  const ICON_PAUSE = '<img src="/static/assets/icons/iconshock/pause.svg" class="icon-xs" alt="Pause">';
+
   function loadTrack(idx) {
     if (!mp3Audio || !mp3Playlist || !mp3Playlist[idx]) return;
     currentTrackIdx = idx;
     const track = mp3Playlist[currentTrackIdx];
     mp3Audio.src = track.src;
-    if (mp3Title) mp3Title.textContent = track.title;
+    if (mp3Title) {
+      const cleanTitle = escapeHtml(track.title.replace(/^[🎵🎧]\s*/, ''));
+      mp3Title.innerHTML = `<img src="/static/assets/icons/iconshock/music.svg" class="icon-xs" alt="Music"> ${cleanTitle}`;
+    }
   }
 
 
@@ -408,14 +414,14 @@
     if (!mp3Audio) return;
     if (mp3Audio.paused) {
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
-        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title}`, false);
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
+        showToast(`Playing: ${mp3Playlist[currentTrackIdx].title.replace(/^[🎵🎧]\s*/, '')}`, false);
       }).catch(e => {
         showToast('Click play to allow audio playback', true);
       });
     } else {
       mp3Audio.pause();
-      if (btnMp3Play) btnMp3Play.textContent = '▶️';
+      if (btnMp3Play) btnMp3Play.innerHTML = ICON_PLAY;
     }
   }
 
@@ -438,7 +444,7 @@
     btnMp3Next.addEventListener('click', () => {
       loadTrack((currentTrackIdx + 1) % mp3Playlist.length);
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
       });
     });
   }
@@ -446,7 +452,7 @@
     btnMp3Prev.addEventListener('click', () => {
       loadTrack((currentTrackIdx - 1 + mp3Playlist.length) % mp3Playlist.length);
       mp3Audio.play().then(() => {
-        if (btnMp3Play) btnMp3Play.textContent = '⏸️';
+        if (btnMp3Play) btnMp3Play.innerHTML = ICON_PAUSE;
       });
     });
   }
@@ -971,7 +977,9 @@
     adminPanelCard.style.display = isHost ? 'block' : 'none';
 
     if (adminPauseBtn && data.is_paused !== undefined) {
-      adminPauseBtn.textContent = data.is_paused ? '▶️ Resume Clock' : '⏸️ Pause Clock';
+      adminPauseBtn.innerHTML = data.is_paused 
+        ? '<img src="/static/assets/icons/iconshock/play.svg" class="icon-sm" alt="Resume"> Resume Clock' 
+        : '<img src="/static/assets/icons/iconshock/pause.svg" class="icon-sm" alt="Pause"> Pause Clock';
     }
 
     if (adminKickSelect && data.players) {
