@@ -28,23 +28,17 @@
   --glow-cyan: 0 0 20px rgba(56, 189, 248, 0.25);
 }
 
-/* --- Iconshock Icon Utilities --- */
-.icon-sm {
-  width: 16px;
-  height: 16px;
+/* --- Iconshock Icon Utilities (32px Standardized) --- */
+.icon-sm,
+.icon-xs,
+.icon {
+  width: 32px;
+  height: 32px;
   display: inline-block;
-  vertical-align: -2px;
+  vertical-align: middle;
   object-fit: contain;
-  margin-right: 4px;
-}
-
-.icon-xs {
-  width: 13px;
-  height: 13px;
-  display: inline-block;
-  vertical-align: -1px;
-  object-fit: contain;
-  margin-right: 3px;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 * {
@@ -578,16 +572,6 @@ canvas#go-board {
   user-select: none;
 }
 
-.icon {
-  width: 18px;
-  height: 18px;
-  color: var(--accent-gold);
-}
-
-.icon-sm {
-  width: 15px;
-  height: 15px;
-}
 
 /* --- Match Telemetry & Clocks --- */
 .clocks-container {
