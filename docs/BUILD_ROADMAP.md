@@ -112,3 +112,20 @@ graph TD
   - Manual game state reset & clock pause/resume triggers.
   - Room privacy / password enforcement options.
 
+---
+
+### 📍 Task 11: StoneSensei Local Ollama LLM Agent Layer (`server/agents/ollama_agent/`)
+- **Objective**: Implement a local, confidential AI Go sensei powered by Ollama (`0.0.0.0:8085`).
+- **Key Deliverables**:
+  - Continuous multi-turn chat history buffer per session (`session_id`).
+  - Tactical move prediction endpoint (`/api/ollama/predict` & `/api/ollama/move`).
+  - Session history retrieval (`/api/ollama/history/{session_id}`) and reset endpoints.
+
+---
+
+### 📍 Task 12: Automated Playwright E2E Suite & Docker Watch DX (`tests/e2e/` & `docker-compose.yml`)
+- **Objective**: Build out automated E2E testing and live development container hot-reloading.
+- **Key Deliverables**:
+  - 5/5 Playwright E2E test specs validating UI canvas, SGF exports, and identity sync.
+  - `docker-compose.yml` `develop.watch` configuration for frontend sync & container restart.
+
