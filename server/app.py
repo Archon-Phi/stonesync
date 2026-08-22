@@ -10,9 +10,14 @@ from fastapi.staticfiles import StaticFiles
 
 from server.go_server import RoomManager
 from server.sgf import export_to_sgf, parse_sgf
+from server.agents.ollama_agent import agent_app as ollama_agent_app
 from fastapi import Response, Request
 
 app = FastAPI(title="StoneSync - Online Multiplayer Go")
+
+# Include local Ollama LLM Agent routes
+app.include_router(ollama_agent_app.router)
+
 
 
 # Locate frontend directory relative to current file

@@ -24,8 +24,17 @@ AI agents can connect to any room as player Black or White over WebSockets.
 ### 2. Referee & Arbiter Agents
 - Automated agents monitoring room events, detecting player disconnect timeouts, and auto-scoring inactive matches.
 
-### 3. Move Evaluator & Analysis Subagents
-- Background workers running KataGo / Leela Zero engines that consume room state broadcasts, calculate win probabilities, and output move heatmaps.
+### 4. Local Ollama LLM Agent (StoneSensei)
+- Agentic Go-playing layer powered by a local Ollama LLM (`http://127.0.0.1:11434`).
+- **Continuous Multi-Turn Chat History**: Append-only JSON/memory buffer per game session (`session_id`).
+- **State Context Injection**: Automatically injects board state, opponent moves (GTP coordinates e.g. E4), and capture counts.
+- **Confidential & Local Network Binding**: Binds to `0.0.0.0` on configurable port (`OLLAMA_AGENT_PORT`, default: `8085`) for remote client access with zero external data sharing.
+- **Endpoints**:
+  - `POST /api/ollama/predict` (or `/api/ollama/move`): Returns structured move prediction and tactical commentary.
+  - `POST /api/ollama/chat`: Sends multi-turn chat messages within game session context.
+  - `GET /api/ollama/history/{session_id}`: Retrieves continuous chat history.
+  - `POST /api/ollama/reset/{session_id}`: Clears session history buffer.
+  - `GET /api/ollama/health`: Status check.
 
 ---
 
@@ -35,7 +44,7 @@ AI agents can connect to any room as player Black or White over WebSockets.
                   ┌──────────────────────┐
                   │   Go Web Browser UI  │
                   └──────────┬───────────┘
-                             │ WebSocket
+                             │ WebSocket / REST
                              ▼
 ┌────────────────────────────────────────────────────────┐
 │               FastAPI App & Room Manager               │
@@ -44,8 +53,8 @@ AI agents can connect to any room as player Black or White over WebSockets.
            │                          │
            ▼                          ▼
 ┌──────────────────────┐  ┌──────────────────────────────┐
-│  Go Engine Core      │  │  AI Agent Bot / KataGo Bridge│
-│  (server/go_game.py) │  │  (server/agents/)            │
+│  Go Engine Core      │  │  Ollama Agent Service & Bot  │
+│  (server/go_game.py) │  │  (server/agents/ollama_agent)│
 └──────────────────────┘  └──────────────────────────────┘
 ```
 
@@ -73,3 +82,12 @@ async def run_bot(room_id="main-match", bot_id="bot_alpha"):
 if __name__ == "__main__":
     asyncio.run(run_bot())
 ```
+
+### Running the Ollama Agent Service
+
+Expose the agentic Ollama service over your local network interface (`0.0.0.0:8085`):
+
+```bash
+python3 -m server.agents.ollama_agent
+```
+
