@@ -33,8 +33,15 @@ def record_browser_session():
 
             # 1. Navigate to AI match room
             print("🎥 Navigating to StoneSync GUI...")
-            page.goto("http://127.0.0.1:8085/go?room=demo-session&mode=ai", wait_until="networkidle")
+            page.goto("http://127.0.0.1:8085/go?room=demo-session&mode=ai", wait_until="domcontentloaded")
             time.sleep(1.5)
+
+            # Dismiss name prompt modal if visible
+            name_input = page.locator("#name-prompt-input")
+            if name_input.is_visible():
+                name_input.fill("DemoPlayer")
+                page.locator("#btn-save-name").click()
+                time.sleep(0.5)
 
             # 2. Toggle Sensei Hints
             print("💡 Toggling Sensei Tactical Hints...")
